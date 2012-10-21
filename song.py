@@ -1,17 +1,17 @@
 ####
 #
-# Artist, Song, Url, path classes
+# Song classes for client and server
 #
 ####
 
-class clientSong:
+class ClientSong:
 
     def __init__(self, artist, song, uri):
         self.artist = artist
         self.song   = song
         self.URI    = uri
 
-class serverSong:
+class ServerSong:
 
     def __init__(self, artist, song, path):
         self.artist = artist
