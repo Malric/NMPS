@@ -1,21 +1,26 @@
 ####
 #
-# Just initial testing of wav file and playlist generation without any ip or port numbers
-# Can be tested by putting some MP3 files to "MP3s" directory
+# Just initial testing of wav file and playlist generation
+# Can be tested by putting some MP3 files to "MP3s" directory and connecting to server by e.g. "telnet localhost <PORT>"
 # Creates a folder for wav files to be used during runtime of the server
 # eyeD3 used for reading MP3 metadata can be downloaded from http://pypi.python.org/pypi/eyeD3-pip/0.6.19
 # ffmpegwrapper used for running ffmpeg commands can be downloaded from http://pypi.python.org/pypi/ffmpegwrapper/0.1-dev
 #
 ####
 
+import socket
+import sys
 import os
 import errno
 import shutil
+from thread import start_new_thread
 from song import ServerSong
 from ffmpegwrapper import FFmpeg, Input, Output
 import eyeD3
 
 songs = []
+HOST = ''
+PORT = 8889
 
 
 # Creates wav files from MP3s
@@ -28,7 +33,7 @@ def InitSongs():
         os.makedirs(os.getcwd() + "/Wavs") # create "Wavs" dir to current working dir
     except OSError as exception:
         if exception.errno != errno.EEXIST: # ignore error if path exists
-            raise    
+            raise
     
     mp3_filenames = os.listdir("MP3s")
     
@@ -68,15 +73,50 @@ def GetPlaylist():
     return playlist
 
 
+#Thread for client
+def ClientThread(conn):
+    conn.send("Welcome to the lTunez Server!\n")
+    
+    while True:
+        data = conn.recv(1024)
+        if not data:
+            print "No data"
+            break
+        print "Creating playlist"
+        reply = GetPlaylist()
+        print "Sending playlist"
+        conn.sendall(reply)
+    
+    conn.close()
+
+
 #Server actions
 def Server():
     InitSongs()
-    print "Playlist:\n" + GetPlaylist()
-    # TODO: send playlist to the client
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print "Socket created"
+    
+    try:
+        s.bind((HOST, PORT))
+    except socket.error, msg:
+        print "Bind failed. Error Code: " + str(msg[0]) + " Message: " + msg[1]
+        sys.exit()
+    print "Socket bind complete"
+    
+    s.listen(10)
+    print "Socket now listening"
+    
+    while 1:
+        conn, addr = s.accept()
+        print "Connected with" + addr[0] + ":" + str(addr[1])
+        start_new_thread(ClientThread, (conn,))
     
     # TODO: other server actions
+    s.close()
     
     shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # finally remove "Wavs" dir 
+
     
-    
+#Run the server    
 Server()
