@@ -13,9 +13,10 @@ class ClientSong:
 
 class ServerSong:
 
-    def __init__(self, artist, song, path):
+    def __init__(self, length, artist, title, path):
+        self.length = length
         self.artist = artist
-        self.song = song
+        self.title = title
         self.path = path
 
 
