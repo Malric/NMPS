@@ -142,7 +142,7 @@ def main(host,port):
     #Send request to playlist server
     sock = connect(host,port)
     if(sock != None):
-        req = "GET PLAYLIST\r\n"
+        req = "GET PLAYLIST\r\nLtunez-Client\r\n\r\n"
         sock.send(req)
         inputs.append(sock)
     quit = False;
