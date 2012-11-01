@@ -19,7 +19,7 @@ import eyeD3
 
 songs = []
 HOST = ''
-PORT = 8888
+PORT = 8888 # server listens this port
 
 
 # Creates wav files from MP3s
@@ -54,42 +54,40 @@ def InitSongs():
 # Returns playlist string in format:
 #
 # #EXTM3U
-# #EXTINF:<length in sec>, <artist> - <title>
+# #EXTINF:<time>, <artist> - <title>
 # rtsp://ip:port/<wav filename>
 # ...
 #
 def GetPlaylist():
     global songs
-    playlist = "#EXTM3U\n"
+    playlist = "#EXTM3U\r\n"
     
     for song in songs:
         i = song.path.rfind("/")
         wav_filename = song.path[i+1:]
         print "Adding '" + wav_filename + "' to playlist"
-        playlist += "#EXTINF:" + song.length + ", " + song.artist + " - " + song.title + "\nrtsp://ip:port/" + wav_filename + "\n"
+        playlist += "#EXTINF:" + song.length + ", " + song.artist + " - " + song.title + "\r\nrtsp://ip:port/" + wav_filename + "\r\n"
         
     return playlist
 
 
 #Thread for client
 def ClientThread(conn):
-    conn.send("Welcome to the lTunez Server!\n")
     
     while True:
         data = conn.recv(1024)
         if not data:
             print "No data"
             break
-        elif data == "GET PLAYLIST\r\n":
+        elif data == "GET PLAYLIST\r\nLtunez-Client":
             print "Creating playlist"
             playlist = GetPlaylist()
-            reply = "Playlist OK\nLtunez-Server\n" + playlist
+            reply = "Playlist OK\r\nLtunez-Server\r\n" + playlist
             print "Sending playlist"
             conn.sendall(reply)
         else:
-            print "Invalid request"
+            print "Invalid request from client"
             
-    
     conn.close()
 
 
@@ -117,7 +115,7 @@ def Server():
             start_new_thread(ClientThread, (conn,))
             # TODO: other server actions
         except KeyboardInterrupt:
-            print "\nServer closing..."
+            print "\r\nServer closing..."
             break
     
     s.close()
