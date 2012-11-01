@@ -37,18 +37,23 @@ class Playlist:
  
     def parse(self,data):
         """ Parse m3u playlist. """
+        index = 0
         try:
             lines = data.splitlines()
         except:#be more explicit
-            print 'data.splitlines()'    
-        for index in range(len(lines) - 3):
-            if index%2 != 0:
-                continue
-            try:        
-                lst = re.split('#EXTINF:|,|-',lines[index + 2])
-            except:#be more explicit
-                print 're.split()'
-            self.playlist[index/2] = [int(lst[1]),lst[2],lst[3],lines[index + 3]]
+            print 'data.splitlines()' 
+        if lines[0] == "Playlist OK":
+            if lines[1] == "Ltunez-Server":
+                if  lines[2] == "#EXTM3U":
+                    for line in lines[3:len(lines) - 1]:
+                        if lines.index(line)%2 == 0:
+                            continue
+                        try:        
+                            lst = re.split('#EXTINF:|,|-',line,3)
+                        except:#be more explicit
+                            print 're.split()'
+                        self.playlist[index] = [int(lst[1]),lst[2],lst[3],lines[(lines.index(line))+1]]
+                        index += 1
         self.draw()
 
     def next(self):
@@ -166,7 +171,6 @@ def main(host,port):
                     playlist.previous()  
             else:
                 data = data + ins.recv(1024)
-                #print data
                 if re.search('\\r\\n\\r\\n',data):
                     playlist.parse(data)
                     data = ''

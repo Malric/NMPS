@@ -79,10 +79,10 @@ def ClientThread(conn):
         if not data:
             print "No data"
             break
-        elif data == "GET PLAYLIST\r\nLtunez-Client":
+        elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
             print "Creating playlist"
             playlist = GetPlaylist()
-            reply = "Playlist OK\r\nLtunez-Server\r\n" + playlist
+            reply = "Playlist OK\r\nLtunez-Server\r\n" + playlist + "\r\n"
             print "Sending playlist"
             conn.sendall(reply)
         else:
