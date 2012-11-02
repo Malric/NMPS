@@ -1,6 +1,6 @@
 ####
 #
-# Can be tested by putting some MP3 files to "MP3s" directory and connecting to server by e.g. "telnet localhost <PORT>"
+# Can be tested by putting some MP3 files to "MP3s" directory
 # Creates a folder for wav files to be used during runtime of the server
 # eyeD3 used for reading MP3 metadata can be downloaded from http://pypi.python.org/pypi/eyeD3-pip/0.6.19
 # ffmpegwrapper used for running ffmpeg commands can be downloaded from http://pypi.python.org/pypi/ffmpegwrapper/0.1-dev
@@ -14,7 +14,7 @@ import errno
 import shutil
 from thread import start_new_thread
 from song import ServerSong
-from ffmpegwrapper import FFmpeg, Input, Output
+from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
 import eyeD3
 
 songs = []
@@ -22,7 +22,7 @@ HOST = ''
 PORT = 8888 # server listens this port
 
 
-# Creates wav files from MP3s
+# Creates wav files (using pcm mu-law codec) from MP3s
 # Creates ServerSong objects based on wav file paths and corresponding MP3 metadata
 # Stores ServerSong objects to "songs" list
 def InitSongs():
@@ -36,17 +36,24 @@ def InitSongs():
     
     mp3_filenames = os.listdir("MP3s")
     
-    for fname in mp3_filenames:
-        mp3_path = "MP3s/" + fname
-        wav_path = "Wavs/" + os.path.splitext(fname)[0] + ".wav" # wav filename is the same as mp3 except the extension
+    for mp3_filename in mp3_filenames:
+        mp3_path = "MP3s/" + mp3_filename
+        wav_filename = os.path.splitext(mp3_filename)[0] + ".wav" # wav filename is the same as mp3 except the extension
+        wav_path = "Wavs/" + wav_filename
+        
+        # construct and run ffmpeg command
         input_mp3 = Input(mp3_path)
-        output_wav = Output(wav_path)
-        ffmpeg_command = FFmpeg("ffmpeg", input_mp3, output_wav)
+        output_wav = Output(wav_path, AudioCodec("pcm_mulaw"))
+        opt_dict = dict([("-ar", "8000"), ("-ac", "1"), ("-ab", "64000")]) # sampling rate 8000 Hz, 1 audio channel (mono), bitrate 64kbits/s
+        opt = options.Option(opt_dict)
+        ffmpeg_command = FFmpeg("ffmpeg", input_mp3, opt, output_wav)
         ffmpeg_command.run()
-        tag = eyeD3.Tag()
-        tag.link(mp3_path)
+        print "File created: '" + wav_filename + "'"
+        
         mp3header = eyeD3.Mp3AudioFile(mp3_path)
         length = str(mp3header.getPlayTime())
+        tag = eyeD3.Tag()
+        tag.link(mp3_path)
         song = ServerSong(length, tag.getArtist(), tag.getTitle(), wav_path)
         songs.append(song)
 
