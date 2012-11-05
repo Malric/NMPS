@@ -17,7 +17,7 @@ class RTSPMessage:
     def __init__(self, message):
         self.rtspCommand = ""
         self.URI         = ""
-        self.protocol    = ""
+        self.protocol    = "RTSP/1.0"
         self.pathname    = ""
         self.cseq        = ""
         self.bandwith    = ""
@@ -27,8 +27,11 @@ class RTSPMessage:
         self.transport   = ""
         self.range       = ""
         self.clientport  = ""
- 
-        self.rtspMsg = message
+        
+        if message is not None:
+            self.rtspMsg = message
+        else:
+            self.rtspMsg = ""
 
         #Regex for different fields
 
@@ -52,7 +55,6 @@ class RTSPMessage:
     # Parsering
     #
     ####
-
     def parse(self):
         lines = self.rtspMsg.split('\r\n')
                    
@@ -107,7 +109,9 @@ class RTSPMessage:
                 self.range = hits.group(1)
                 print "Range: "+self.range+"\n"
 
-            
+    ##
+    # URI Parsering routine   
+    ##    
     def parseURI(self):
         #Reverse escapes
         self.URI = urllib.unquote(self.URI) 
@@ -122,16 +126,77 @@ class RTSPMessage:
         #Convert using logging methods
         print self.rtspMsg
 
-    def createOptionsReplyMessage(self):
-        self.rtspMsg = ""
-        self.rtspMsg += self.protocol +" 200 OK\r\n"
-        self.rtspMsg += "CSeq: "+ self.cseq +"\r\n"
+    ##
+    # Description reply message
+    ##
+    def createDescriptionReplyMessage(self, cseq, URI, type, length, SDP):
+        self.createReplyHeader(cseq)
+        self.rtspMsg += "Content-Base: "+URI+"\r\n"
+        self.rtspMsg += "Content-Type: "+type+"\r\n"
+        self.rtspMsg += "Content-Length: "+length+"\r\n\r\n"
+        self.rtspMsg += SDP
+        return self.rtspMsg
+
+    ##
+    # Setup Reply Message
+    ##
+    def createSetupReplyMessage(self, cseq, transport, cast, clientport, serverport):
+        self.createReplyHeader(cseq)
+        self.rtspMsg += "Transport: "+transport+";"
+        self.rtspMsg += cast+";"
+        self.rtspMsg += "client_port="+clientport+";"
+        self.rtspMsg += "server_port="+serverport+"\r\n"
+        self.rtspMsg += "\r\n"
+        return self.rtspMsg
+
+    ##
+    # Play reply message
+    ##
+    def createPlayReplyMessage(self, cseq, session, URI, seq, rtptime):
+        self.createReplyHeader(cseq)
+        self.rtspMsg += "Session: "+session+"\r\n"
+        self.rtspMsg += "RTP-Info: "
+        self.rtspMsg += "url="+URI+";"
+        self.rtspMsg += "seq="+seq+";"
+        self.rtspMsg += "rtptime="+rtptime+"\r\n"
+        self.rtspMsg += "\r\n"
+        return self.rtspMsg
+
+    ##
+    # Pause reply message
+    ##
+    def createPauseReplyMessage(self, cseq, session):
+        self.createReplyHeader(cseq)
+        self.rtspMsg += "Session: "+session+"\r\n"
+        self.rtspMsg +="\r\n"
+        return self.rtspMsg
+
+    ##
+    # Options reply message
+    ##
+    def createOptionsReplyMessage(self, cseq):
+        self.createReplyHeader(cseq)
         self.rtspMsg += "Public: "
         for command in commands:
             self.rtspMsg += command +", "
         self.rtspMsg = self.rtspMsg[0:(len(self.rtspMsg) -2)]
-        self.rtspMsg +="\r\n"
+        self.rtspMsg +="\r\n\r\n"
         return self.rtspMsg
+    ##
+    # Teardown reply message.
+    ##
+    def createTeardownReplyMessage(self, cseq):
+        self.createReplyHeader(cseq)
+        self.rtspMsg += "\r\n"
+        return self.rtspMsg
+
+    ##
+    #  Creates hommor header for all RTSP reply messages
+    ##
+    def createReplyHeader(self, cseq):
+        self.rtspMsg = ""
+        self.rtspMsg += self.protocol + " 200 OK\r\n"
+        self.rtspMsg += "CSeq: " + cseq +"\r\n"
 
 a = RTSPMessage("OPTIONS rtsp://example.com/media.mp4 RTSP/1.0 \r\n"\
                 "CSeq: 1\r\n"\
@@ -140,7 +205,7 @@ a = RTSPMessage("OPTIONS rtsp://example.com/media.mp4 RTSP/1.0 \r\n"\
 
 print a.tostring()
 a.parse()
-print a.createOptionsReplyMessage()
+print a.createOptionsReplyMessage(a.cseq)
 
 b = RTSPMessage("DESCRIBE rtsp://example.com/media.mp4 RTSP/1.0\r\n"\
                 "CSeq: 2\r\n")
