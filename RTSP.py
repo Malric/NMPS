@@ -129,12 +129,13 @@ class RTSPMessage:
     ##
     # Description reply message
     ##
-    def createDescriptionReplyMessage(self, cseq, URI, type, length, SDP):
+    def createDescriptionReplyMessage(self, cseq, URI, type, SDP):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Content-Base: "+URI+"\r\n"
         self.rtspMsg += "Content-Type: "+type+"\r\n"
-        self.rtspMsg += "Content-Length: "+length+"\r\n\r\n"
+        self.rtspMsg += "Content-Length: "+str(len(length))+"\r\n\r\n"
         self.rtspMsg += SDP
+        self.rtspMsg += "\r\n"
         return self.rtspMsg
 
     ##
