@@ -198,6 +198,11 @@ class RTSPMessage:
         self.rtspMsg += self.protocol + " 200 OK\r\n"
         self.rtspMsg += "CSeq: " + cseq +"\r\n"
 
+    ##
+    # Faulty message
+    ##
+    def createFaultyReply(self):
+        return "RTSP/1.0 400 Bad Request\r\n\r\n"
 a = RTSPMessage("OPTIONS rtsp://example.com/media.mp4 RTSP/1.0 \r\n"\
                 "CSeq: 1\r\n"\
                 "Require: implicit-play\r\n"\
