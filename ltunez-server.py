@@ -14,6 +14,7 @@ import os
 import errno
 import shutil
 import RTSP
+import sdp
 from song import ServerSong
 from ffmpegwrapper import FFmpeg, Input, Output
 import eyeD3
@@ -161,7 +162,7 @@ class Accept_RTSP(threading.Thread):
             if(p.rtspCommand == "OPTIONS"):
                 self.conn.sendall(p.createOptionsReplyMessage(p.cseq))
             elif(p.rtspCommand == "DESCRIBE"):
-                self.conn.sendall(p.createDescriptionReplyMessage(p.cseq, p.URI,"application/sdp",str(0),""))
+                self.conn.sendall(p.createDescriptionReplyMessage(p.cseq, p.URI,sdp.sdp("subject",p.session,"9000")))
             elif(p.rtspCommand == "SETUP"):
                 #configuration to do
                 self.conn.sendall(p.createSetupReplyMessage(p.cseq, p.transport, "unicast", p.clientport, "9000-90001"))
