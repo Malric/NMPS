@@ -2,7 +2,13 @@
 #
 # Playlist/RTSP server
 #
+# Can be tested by putting some MP3 files to "MP3s" directory
+# Creates a folder for wav files to be used during runtime of the server
+# eyeD3 used for reading MP3 metadata can be downloaded from http://pypi.python.org/pypi/eyeD3-pip/0.6.19
+# ffmpegwrapper used for running ffmpeg commands can be downloaded from http://pypi.python.org/pypi/ffmpegwrapper/0.1-dev
+#
 ####
+
 
 import sys
 import argparse
@@ -16,10 +22,11 @@ import shutil
 import RTSP
 import sdp
 from song import ServerSong
-from ffmpegwrapper import FFmpeg, Input, Output
+from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
 import eyeD3
 
 songs = []
+
 
 def listen(PORT):
     """ Create listening socket. """
@@ -43,6 +50,7 @@ def listen(PORT):
         break
     return s
 
+
 def read(socket):
     """ Wrapper function to read from socket untill complete message is obtained or timeouts. """
     data = ""    
@@ -61,16 +69,9 @@ def read(socket):
             break
     return data
 
-####
-#
-# Can be tested by putting some MP3 files to "MP3s" directory and connecting to server by e.g. "telnet localhost <PORT>"
-# Creates a folder for wav files to be used during runtime of the server
-# eyeD3 used for reading MP3 metadata can be downloaded from http://pypi.python.org/pypi/eyeD3-pip/0.6.19
-# ffmpegwrapper used for running ffmpeg commands can be downloaded from http://pypi.python.org/pypi/ffmpegwrapper/0.1-dev
-#
-####
 
-# Creates wav files from MP3s
+
+# Creates wav files (using pcm mu-law codec) from MP3s
 # Creates ServerSong objects based on wav file paths and corresponding MP3 metadata
 # Stores ServerSong objects to "songs" list
 def initSongs():
@@ -84,19 +85,27 @@ def initSongs():
     
     mp3_filenames = os.listdir("MP3s")
     
-    for fname in mp3_filenames:
-        mp3_path = "MP3s/" + fname
-        wav_path = "Wavs/" + os.path.splitext(fname)[0] + ".wav" # wav filename is the same as mp3 except the extension
+    for mp3_filename in mp3_filenames:
+        mp3_path = "MP3s/" + mp3_filename
+        wav_filename = os.path.splitext(mp3_filename)[0] + ".wav" # wav filename is the same as mp3 except the extension
+        wav_path = "Wavs/" + wav_filename
+        
+        # construct and run ffmpeg command
         input_mp3 = Input(mp3_path)
-        output_wav = Output(wav_path)
-        ffmpeg_command = FFmpeg("ffmpeg", input_mp3, output_wav)
+        output_wav = Output(wav_path, AudioCodec("pcm_mulaw"))
+        opt_dict = dict([("-ar", "8000"), ("-ac", "1"), ("-ab", "64000")]) # sampling rate 8000 Hz, 1 audio channel (mono), bitrate 64kbits/s
+        opt = options.Option(opt_dict)
+        ffmpeg_command = FFmpeg("ffmpeg", input_mp3, opt, output_wav)
         ffmpeg_command.run()
-        tag = eyeD3.Tag()
-        tag.link(mp3_path)
+        print "File created: '" + wav_filename + "'"
+        
         mp3header = eyeD3.Mp3AudioFile(mp3_path)
         length = str(mp3header.getPlayTime())
+        tag = eyeD3.Tag()
+        tag.link(mp3_path)
         song = ServerSong(length, tag.getArtist(), tag.getTitle(), wav_path)
         songs.append(song)
+
 
 # Returns playlist string in format:
 #
@@ -116,6 +125,7 @@ def getPlaylist():
         playlist += "#EXTINF:" + song.length + ", " + song.artist + " - " + song.title + "\r\nrtsp://ip:port/" + wav_filename + "\r\n"
         
     return playlist
+
 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
@@ -139,6 +149,7 @@ class Accept_PL(threading.Thread):
         else:
             print "Playlist Server: Invalid request from client"
         self.conn.close()
+
 
 class Accept_RTSP(threading.Thread):
     """ Thread class. Each thread handles RTSP message request/reply for specific connection. """
@@ -176,7 +187,8 @@ class Accept_RTSP(threading.Thread):
                 print 'Error: Unknown command'
                 self.conn.close()
                 break         
-            
+
+           
 def rtsp(port):
     """ This function waits for RTSP request and starts new thread. """
     sock = listen(port)
@@ -194,21 +206,23 @@ def rtsp(port):
         a = Accept_RTSP(conn,addr)
         a.start()
 
+
 def playlist(port):
     """ This function waits for playlist request and starts new thread. """
     initSongs()
     sock = listen(port)
     if sock is None:
-        print 'Playlist Serevr: Error: Could not open socket.'
+        print 'Playlist Server: Error: Could not open socket.'
         sys.exit(1)
     print 'Playlist Server: Listening on port '+str(port)
     while True:
         try:
             conn,addr = sock.accept()
         except KeyboardInterrupt:
+            print "\r\nServer closing..."
             sock.close()
-            sys.exit(0)
             shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # finally remove "Wavs" dir 
+            sys.exit(0)
         print 'Connected by ', addr
         a = Accept_PL(conn,addr)
         a.start()
