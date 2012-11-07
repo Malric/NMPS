@@ -94,8 +94,9 @@ class RTSPMessage:
             hits = self.transportRegex.search(line)
             if hits is not None:
                 self.transport = hits.group(1)
-                sections = self.transport.split("=")
-                clientport = sections[0]
+                sections = self.transport.split("client_port=")
+                if sections is not None:
+                    clientport = sections[0]
             hits = self.rangeRegex.search(line)
             if hits is not None:
                 self.range = hits.group(1)
@@ -116,6 +117,9 @@ class RTSPMessage:
         elif self.rtspCommand == "SETUP":
             if self.transport == "":
                 print "Faulty packet! Transport missing!\n"
+                return None
+            else self.client_port == "":
+                print "Faulty packet! Client_port was missing!"
                 return None
         if self.session == "":
             print "Faulty packet! Session missing!\n"
