@@ -52,7 +52,7 @@ def listen(PORT):
 
 
 def read(socket):
-    """ Wrapper function to read from socket untill complete message is obtained or timeouts. """
+    """ Wrapper function to read from socket until complete message is obtained or timeouts. """
     data = ""    
     inputs = []
     inputs.append(socket)
@@ -65,16 +65,13 @@ def read(socket):
             return None
         for ins in inputready:
             data = data + ins.recv(1024)
-        if re.search('\\r\\n\\r\\n',data):
+        if re.search("\\r\\n\\r\\n",data):
             break
     return data
 
 
-
-# Creates wav files (using pcm mu-law codec) from MP3s
-# Creates ServerSong objects based on wav file paths and corresponding MP3 metadata
-# Stores ServerSong objects to "songs" list
 def initSongs():
+    """ This function creates wav files from MP3s and ServerSong objects into 'songs' list. """
     global songs
     
     try:
@@ -97,7 +94,7 @@ def initSongs():
         opt = options.Option(opt_dict)
         ffmpeg_command = FFmpeg("ffmpeg", input_mp3, opt, output_wav)
         ffmpeg_command.run()
-        print "File created: '" + wav_filename + "'"
+        print "Playlist Server: File created: '" + wav_filename + "'"
         
         mp3header = eyeD3.Mp3AudioFile(mp3_path)
         length = str(mp3header.getPlayTime())
@@ -107,24 +104,24 @@ def initSongs():
         songs.append(song)
 
 
-# Returns playlist string in format:
-#
-# #EXTM3U
-# #EXTINF:<time>, <artist> - <title>
-# rtsp://ip:port/<wav filename>
-# ...
-#
 def getPlaylist():
+    """ This function returns a playlist string in M3U format. """
     global songs
     playlist = "#EXTM3U\r\n"
     
     for song in songs:
         i = song.path.rfind("/")
         wav_filename = song.path[i+1:]
-        print "Adding '" + wav_filename + "' to playlist"
+        print "Playlist Server: Adding '" + wav_filename + "' to playlist"
         playlist += "#EXTINF:" + song.length + ", " + song.artist + " - " + song.title + "\r\nrtsp://ip:port/" + wav_filename + "\r\n"
         
     return playlist
+
+
+def getBytesFromFile(fileObject, startIndex, number):
+    """ This function returns 'number' bytes from the file starting at index 'startIndex' """
+    fileObject.seek(startIndex)
+    return fileObject.read(number)
 
 
 class Accept_PL(threading.Thread):
@@ -136,7 +133,7 @@ class Accept_PL(threading.Thread):
         self.addr = addr
 
     def run(self):
-        """ Override case class run() function. """
+        """ Override base class run() function. """
         data = read(self.conn)
         if data is None:
             print "Playlist Server: No data"
@@ -144,8 +141,8 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: Creating playlist"
             playlist = getPlaylist()
             reply = "Playlist OK\r\nLtunez-Server\r\n" + playlist + "\r\n"
-            print "Playlist Sever: Sending playlist"
-            conn.sendall(reply)
+            print "Playlist Server: Sending playlist"
+            self.conn.sendall(reply)
         else:
             print "Playlist Server: Invalid request from client"
         self.conn.close()
@@ -164,7 +161,7 @@ class Accept_RTSP(threading.Thread):
         while True:
             data = read(self.conn)
             if data is None:
-                print 'Error:'
+                print "Error:"
                 self.conn.close()
                 break
             p = RTSP.RTSPMessage(data)
@@ -184,7 +181,7 @@ class Accept_RTSP(threading.Thread):
             elif(p.rtspCommand == "PAUSE"):
                 self.conn.sendall(p.createPauseReplyMessage(p.cseq, p.session))
             else:
-                print 'Error: Unknown command'
+                print "Error: Unknown command"
                 self.conn.close()
                 break         
 
@@ -193,16 +190,17 @@ def rtsp(port):
     """ This function waits for RTSP request and starts new thread. """
     sock = listen(port)
     if sock is None:
-        print 'Error: Could not open socket.'
+        print "RTSP Server: Error: Could not open socket."
         sys.exit(1)
-    print 'RTSP Server: Listening on port '+str(port)
+    print "RTSP Server: Listening on port "+str(port)
     while True:    
         try:
             conn, addr = sock.accept()
         except KeyboardInterrupt:
             sock.close()
-            sys.exit(0)     
-        print 'Connected by ', addr
+            print "RTSP Server: Exiting..."
+            sys.exit(0)
+        print "RTSP Server: Connected by ", addr
         a = Accept_RTSP(conn,addr)
         a.start()
 
@@ -212,18 +210,19 @@ def playlist(port):
     initSongs()
     sock = listen(port)
     if sock is None:
-        print 'Playlist Server: Error: Could not open socket.'
+        print "Playlist Server: Error: Could not open socket."
         sys.exit(1)
-    print 'Playlist Server: Listening on port '+str(port)
+    print "Playlist Server: Listening on port "+str(port)
     while True:
         try:
             conn,addr = sock.accept()
         except KeyboardInterrupt:
-            print "\r\nServer closing..."
             sock.close()
-            shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # finally remove "Wavs" dir 
+            print "\r\nPlaylist Server: Deleting 'Wavs' directory..."
+            shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
+            print "Playlist Server: Exiting..."
             sys.exit(0)
-        print 'Connected by ', addr
+        print "Playlist Server: Connected by ", addr
         a = Accept_PL(conn,addr)
         a.start()
    
@@ -235,7 +234,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     pid = os.fork()
     if pid < 0:
-        print 'Error: fork()'
+        print "Error: fork()"
         sys.exit(1)  
     elif pid == 0:
         playlist(args.playlist)
