@@ -1,5 +1,4 @@
 ####
-#
 # RTSP Message
 #
 ####
@@ -10,7 +9,7 @@ import urlparse
 import logging
 
 #RTSP Commands (Supported)
-commands = ["DESCRIBE", "SETUP", "TEARDOWN", "PLAY", "PAUSE"]
+commands = ["OPTIONS", "DESCRIBE", "SETUP", "TEARDOWN", "PLAY", "PAUSE"]
 
 class RTSPMessage:
 
@@ -96,7 +95,8 @@ class RTSPMessage:
                 self.transport = hits.group(1)
                 sections = self.transport.split("client_port=")
                 if sections is not None:
-                    self.clientport = sections[0]
+                    self.transport = sections[0]
+                    self.clientport = sections[1]
             hits = self.rangeRegex.search(line)
             if hits is not None:
                 self.range = hits.group(1)
@@ -107,7 +107,6 @@ class RTSPMessage:
         else:
             return True
         
-
     ##
     #   Sanitychecker...
     ##
@@ -116,20 +115,20 @@ class RTSPMessage:
             return False
         if self.rtspCommand == "DESCRIBE":
             if self.pathname == "":
-                print "Faulty packet! Pathname could not be found!\n"
+                print "Faulty packet! Pathname could not be found!"
         elif self.rtspCommand == "SETUP":
             if self.transport == "":
-                print "Faulty packet! Transport missing!\n"
+                print "Faulty packet! Transport missing!"
                 return False
             elif self.clientport == "":
                 print "Faulty packet! Client_port was missing!"
                 return False
         elif self.rtspCommand == "PLAY":
             if self.session == "":
-                print "Faulty packet! Session missing!\n"
+                print "Faulty packet! Session missing!"
                 return False
             elif self.range == "":
-                print "Fault packet! Range missing!\n"
+                print "Fault packet! Range missing!"
                 return False
         else:
             return True
@@ -157,20 +156,19 @@ class RTSPMessage:
         self.createReplyHeader(cseq)
         self.rtspMsg += "Content-Base: "+URI+"\r\n"
         self.rtspMsg += "Content-Type: application/sdp\r\n"
-        self.rtspMsg += "Content-Length: "+str(len(length))+"\r\n\r\n"
+        self.rtspMsg += "Content-Length: "+str(len(SDP))+"\r\n\r\n"
         self.rtspMsg += SDP
-        self.rtspMsg += "\r\n"
         return self.rtspMsg
 
     ##
     # Setup Reply Message
     ##
-    def createSetupReplyMessage(self, cseq, transport, cast, clientport, serverport):
+    def createSetupReplyMessage(self, cseq, transport, clientport, serverport,session):
         self.createReplyHeader(cseq)
-        self.rtspMsg += "Transport: "+transport+";"
-        self.rtspMsg += cast+";"
+        self.rtspMsg += "Transport: "+transport
         self.rtspMsg += "client_port="+clientport+";"
         self.rtspMsg += "server_port="+serverport+"\r\n"
+        self.rtspMsg += "Session: "+str(session)+"\r\n"
         self.rtspMsg += "\r\n"
         return self.rtspMsg
 
@@ -202,7 +200,7 @@ class RTSPMessage:
     def createOptionsReplyMessage(self, cseq):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Public: "
-        for command in commands:
+        for command in commands[1:]:
             self.rtspMsg += command +", "
         self.rtspMsg = self.rtspMsg[0:(len(self.rtspMsg) -2)]
         self.rtspMsg +="\r\n\r\n"
@@ -228,11 +226,3 @@ class RTSPMessage:
     ##
     def createFaultyReplyMessage(self):
         return "RTSP/1.0 400 Bad Request\r\n\r\n"
-
-
-a = RTSPMessage("SETUP rtsp://example.com/foo/bar/baz.rm RTSP/1.0\r\n"\
-                "CSeq: 302\r\n"\
-                "Transport: RTP/AVP;unicast;client_port=4588-4589\r\n\r\n")
-
-if a.parse() is False:
-    print "aargh!"
