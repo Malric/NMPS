@@ -62,13 +62,13 @@ class RTSPMessage:
         try:
             (command, uri, protocol) = lines[0].split()
         except ValueError:
-            return None
+            return False
         
         if protocol != self.protocol:
-            return None
+            return False
 
-        if command not in Commands:
-            return None
+        if command not in commands:
+            return False
 
         self.rtspCommand = command
         self.protocol = protocol
@@ -96,13 +96,16 @@ class RTSPMessage:
                 self.transport = hits.group(1)
                 sections = self.transport.split("client_port=")
                 if sections is not None:
-                    clientport = sections[0]
+                    self.clientport = sections[0]
             hits = self.rangeRegex.search(line)
             if hits is not None:
                 self.range = hits.group(1)
+        value = self.sanityCheck()     
         
-        if self.sanityCheck() is None:
-            return None
+        if value == False:
+            return False
+        else:
+            return True
         
 
     ##
@@ -110,24 +113,26 @@ class RTSPMessage:
     ##
     def sanityCheck(self):
         if self.cseq == "" or self.cseq <0:
-            return None
+            return False
         if self.rtspCommand == "DESCRIBE":
             if self.pathname == "":
                 print "Faulty packet! Pathname could not be found!\n"
         elif self.rtspCommand == "SETUP":
             if self.transport == "":
                 print "Faulty packet! Transport missing!\n"
-                return None
-            else self.client_port == "":
+                return False
+            elif self.clientport == "":
                 print "Faulty packet! Client_port was missing!"
-                return None
-        if self.session == "":
-            print "Faulty packet! Session missing!\n"
-            return None
+                return False
         elif self.rtspCommand == "PLAY":
-            if self.range == "":
+            if self.session == "":
+                print "Faulty packet! Session missing!\n"
+                return False
+            elif self.range == "":
                 print "Fault packet! Range missing!\n"
-                return None
+                return False
+        else:
+            return True
 
     ##
     # URI Parsering routine   
@@ -221,5 +226,13 @@ class RTSPMessage:
     ##
     # Faulty message
     ##
-    def createFaultyReply(self):
+    def createFaultyReplyMessage(self):
         return "RTSP/1.0 400 Bad Request\r\n\r\n"
+
+
+a = RTSPMessage("SETUP rtsp://example.com/foo/bar/baz.rm RTSP/1.0\r\n"\
+                "CSeq: 302\r\n"\
+                "Transport: RTP/AVP;unicast;client_port=4588-4589\r\n\r\n")
+
+if a.parse() is False:
+    print "aargh!"

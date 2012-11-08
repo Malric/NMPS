@@ -165,9 +165,12 @@ class Accept_RTSP(threading.Thread):
                 self.conn.close()
                 break
             p = RTSP.RTSPMessage(data)
-            p.parse()
+            val = p.parse()
             commands = ["DESCRIBE", "SETUP", "TEARDOWN", "PLAY", "PAUSE"]
-            if(p.rtspCommand == "OPTIONS"):
+            # Reply about faulty message
+            if val is False:
+                self.conn.sendall(p.createFaultyReplyMessage())
+            elif(p.rtspCommand == "OPTIONS"):
                 self.conn.sendall(p.createOptionsReplyMessage(p.cseq))
             elif(p.rtspCommand == "DESCRIBE"):
                 self.conn.sendall(p.createDescriptionReplyMessage(p.cseq, p.URI,sdp.sdp("subject",p.session,"9000")))
