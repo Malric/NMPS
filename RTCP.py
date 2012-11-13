@@ -57,7 +57,7 @@ class RtcpMessage:
         self.padding = self.header.Padding
         self.count = self.header.Count
         self.type = self.header.Type
-        self.length = hdr.Length
+        self.length = self.header.Length
         
         if self.version != 2:
             print "Faulty packet: wrong version"

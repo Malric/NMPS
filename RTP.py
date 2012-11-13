@@ -20,11 +20,11 @@ class rtp_header(ctypes.BigEndianStructure):
         ("Version", c_uint8, 2),
         ("Padding", c_uint8, 1),
         ("Extension", c_uint8, 1),
-        ("CSRC", c_uint8, 4),
+        ("CSRC_Count", c_uint8, 4),
         ("Marker", c_uint8, 1),
         ("Payload", c_uint8, 7),
         ("Sequence", c_uint16, 16),
-        ("Timestamp" c_uint32, 32),
+        ("Timestamp", c_uint32, 32),
         ("SSRC", c_uint32, 32),
         ("CSRC", c_uint32, 32),
         ]
@@ -32,33 +32,61 @@ class rtp_header(ctypes.BigEndianStructure):
 
 class RTPMessage(ctypes.BigEndianStructure):
     
-    def __init__(self):
-        self.header = None
+    ##
+    #   Initialization, requires ssrc
+    ##
+    def __init__(self, ssrc):
+        self.header = rtp_header()
         self.version = 2
-        self.padding = None
-        self.extension = None
-        self.csrc = None
-        self.marker = None
-        self.payload = None
-        self.sequence = None
-        self.timestamp = None
-        self.ssrc = None
-        self.csrc = None
+        self.padding = 0
+        self.extension = 0
+        self.csrc_count = 0
+        self.marker = 0
+        self.payload = 0
+        self.sequence = 0
+        self.timestamp = 0
+        self.ssrc = ssrc
+        self.csrc = 0
+        
+        # Setting up header
+        self.updateHeader()
         pass
 
-    def parse(self, bytestring):
+    ##
+    # Helper function for updating headers.
+    ##
+    def updateHeader(self):
+        self.header.Version = self.version
+        self.header.Padding = self.padding
+        self.header.CSRC_Count = self.csrc_count
+        self.header.Marker = self.marker
+        self.header.Sequence = self. sequence
+        self.header.Timestamp = self.timestamp
+        self.header.SSRC = self.ssrc
+
+    ##
+    #   Message creation, returns the packet
+    ##
+    def createMessage(self, sequence, timestamp, payload):
+        self.sequence = sequence
+        self.timestamp = timestamp
+        self.payload = payload
+        self.updateHeader()
+        return self.header
+
+
+    def parse(self, msg):
         print "Received RTP"
 
         if bytestring == 0:
             print "Faulty message"
-            break
+            return 0
         msg.readinto(self.header)
         self.version = self.header.Version
         self.padding = self.header.Padding
         self.extension = self.header.Extension
-        self.csrc = self.header.CSRC
+        self.csrc_count = self.header.CSRC_Count
         self.marker = self.header.Marker
-        self.payload = self.header.Payload
         self.sequence = self.header.Sequence
         self.timestamp = self.header.Timestamp
         self.ssrc = self.header.SSRC
@@ -66,7 +94,8 @@ class RTPMessage(ctypes.BigEndianStructure):
 
         if self.version != 2:
             print "Faulty packet: wrong version"
-            break
+            return 0
+
         
         
         
