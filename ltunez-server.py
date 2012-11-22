@@ -13,14 +13,14 @@ import shutil
 import RTSP
 import sdp
 import playlist
-
+import time
 
 class listen():
     """ Create listening socket, compatible with 'with' method """
     def __init__(self,PORT):
         self.PORT = PORT    
     def __enter__(self):
-        HOST = None     # Symbolic name meaning all available interfaces
+        HOST = '127.0.0.1'     # Symbolic name meaning all available interfaces
         self.s = None
         for res in socket.getaddrinfo(HOST, self.PORT, socket.AF_UNSPEC,socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
             af, socktype, proto, canonname, sa = res
@@ -51,6 +51,20 @@ class listen():
         if self.s is not None:
             self.s.close()
         # Error processing
+
+def setup(song):
+    path = 'Sockets/'+song
+    path_c = 'Sockets/temp'
+    unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    unix_socket.bind(path_c)    
+    unix_socket.connect(path)
+    unix_socket.send('Setup,7000,7001')
+    data = unix_socket.recv(1024)
+    print data
+    unix_socket.close()
+    msg = data.split(',')
+    #if msg[0] is 'Ok':
+    return msg[1],msg[2]
 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
@@ -87,10 +101,8 @@ class Accept_RTSP(threading.Thread):
         """ Override base class run() function. """
         UP = True
         data = ""
-        this,that = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM, 0)
         inputs = []
         inputs.append(self.conn)
-        inputs.append(this)
         while UP:
             try:
                 inputready,outputready,exceptready = select.select(inputs,[],[])#timeouts
@@ -114,13 +126,16 @@ class Accept_RTSP(threading.Thread):
                         self.conn.sendall(p.createDescriptionReplyMessage(p.cseq, p.URI,s.getMessage()))
                         p.dumpMessage() # Remove,debug
                     elif(p.rtspCommand == "SETUP"):
-                        # Exec streamer
-                        pid = os.fork()
-                        if pid < 0:
-                            print  'Err'
-                        elif pid == 0:
-                            os.execlp('python','python','streamer.py',str(that.fileno()))
-                        self.conn.sendall(p.createSetupReplyMessage(p.cseq, p.transport, p.clientport, "9000-9001",458959))
+                        # Exec streamer if not exec-ed previously
+                        if not os.path.exists('Sockets/'+'song.wav'): #name of song must be variable
+                            pid = os.fork()
+                            if pid < 0:
+                                print  'Err'
+                            elif pid == 0:
+                                os.execlp('python','python','streamer.py','song.wav') # song argument must be variable
+                        time.sleep(5)
+                        rtp,rtcp = setup('song.wav') # song argument must be variable
+                        self.conn.sendall(p.createSetupReplyMessage(p.cseq, p.transport, p.clientport,rtp + rtcp,458959))
                         p.dumpMessage() # Remove,debug
                     elif(p.rtspCommand == "TEARDOWN"):
                         self.conn.sendall(p.createTeardownReplyMessage(p.cseq))
@@ -139,8 +154,6 @@ class Accept_RTSP(threading.Thread):
                         inputs.remove(self.conn)         
                         self.conn.close()
                         UP = False
-                if option is this:
-                    pass
 
 def server(port_rtsp,port_playlist):
     """ This function waits for RTSP/Playlist request and starts new thread. """

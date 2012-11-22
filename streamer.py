@@ -36,7 +36,7 @@ def bind(PORT):
 def main():
     """ Control section for streamer. """
     # Create unix socket for IPC
-    path = 'Sockets/'+argv[1]
+    path = 'Sockets/'+sys.argv[1]
     if os.path.exists(path): #Caution
         sys.exit(1)
     unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -64,6 +64,7 @@ def main():
     rtp_header = []
     # Stream status
     STREAM = False # Must be present for each client,only one for now,test purpose
+    print 'Streamer ready'
     while True:     
         try:
             inputready,outputready,exceptready = select.select(inputs,[],[],0)
@@ -71,19 +72,24 @@ def main():
             print 'Streamer: '+str(msg)
         for option in inputready:
             if option is unix_socket:
-                data = unix_socket.recv(1024)
+                data,addr = unix_socket.recvfrom(1024)
+                print data,addr
+                # print 'Streamer',address
                 # IPC message format: Command,parameter,paremeter,...
                 args = data.split(',')
-                if args[0] is 'Setup':
-                    rtp = RTP.RTPMessage(random.randint(10000,60000))
-                    clients.append([int(args[1]),int(args[2]),rtp]) # Append all active clients to list,Find idea to remove
-                elif args[0] is 'Play':
+                print args
+                if args[0] == 'Setup':
+                    #rtp = RTP.RTPMessage(random.randint(10000,60000))
+                    clients.append([int(args[1]),int(args[2])]) # Append all active clients to list,Find idea to remove  
+                    unix_socket.sendto('Ok,9000,9001',addr)
+                    print 'sent'         
+                elif args[0] == 'Play':
                     STREAM = True                
-            if option is rtcp_sock:
-                data = rtcp_sock.recv(1024)
+            if option is rtcp_socket:
+                data = rtcp_socket.recv(1024)
                 print data
         for client in clients:
-            rtp.sendto(client[2].createMessage(1,2,4),('::1',client[0]))
+            #rtp.sendto(client[2].createMessage(1,2,4),('::1',client[0]))
         time.sleep(1) # For now            
         
 if __name__ == "__main__":
