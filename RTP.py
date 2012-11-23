@@ -91,6 +91,7 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.timestamp = self.header.Timestamp
         self.ssrc = self.header.SSRC
         self.csrc = self.header.CSRC
+        self.payload = msg[len(self.header):]
 
         if self.version != 2:
             print "Faulty packet: wrong version"
