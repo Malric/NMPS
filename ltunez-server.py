@@ -14,6 +14,7 @@ import RTSP
 import sdp
 import playlist
 import time
+import scp
 
 class listen():
     """ Create listening socket, compatible with 'with' method """
@@ -64,7 +65,7 @@ def setup(song):
     unix_socket.close()
     msg = data.split(',')
     #if msg[0] is 'Ok':
-    return msg[1],msg[2]
+    return msg[1],msg[2], unix_socket
 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
@@ -102,6 +103,7 @@ class Accept_RTSP(threading.Thread):
         UP = True
         data = ""
         inputs = []
+        streamers = {}
         inputs.append(self.conn)
         while UP:
             try:
@@ -134,19 +136,27 @@ class Accept_RTSP(threading.Thread):
                             elif pid == 0:
                                 os.execlp('python','python','streamer.py',p.pathname+'.wav') # song argument must be variable
                         time.sleep(5)
-                        rtp,rtcp = setup(p.pathname+'.wav') # song argument must be variable
+
+                        rtp,rtcp,unix_socket = setup(p.pathname+'.wav') # song argument must be variable
+                        streamers[p.pathname] = unix_socket #Add song/unix_socket information to dictionary
                         self.conn.sendall(p.createSetupReplyMessage(p.cseq, p.transport, p.clientport,rtp + rtcp,458959))
                         p.dumpMessage() # Remove,debug
                     elif(p.rtspCommand == "TEARDOWN"):
+                        #msg = scp.SCPMessage()
+                        #streamers[p.pathname].send(msg.createTeardown(IP))
                         self.conn.sendall(p.createTeardownReplyMessage(p.cseq))
                         p.dumpMessage() # Remove,debug
                         inputs.remove(self.conn)
                         self.conn.close()
                         UP = False
                     elif(p.rtspCommand == "PLAY"):
+                        #msg = scp.SCPMessage()
+                        #streamers[p.pathname].send(msg.createPlay(IP))
                         self.conn.sendall(p.createPlayReplyMessage(p.cseq, p.session, p.URI,"", ""))
                         p.dumpMessage() # Remove,debug
                     elif(p.rtspCommand == "PAUSE"):
+                        #msg = scp.SCPMessage()
+                        #streamers[p.pathname].send(msg.createPause(IP))
                         self.conn.sendall(p.createPauseReplyMessage(p.cseq, p.session))
                         p.dumpMessage() # Remove,debug
                     else:
