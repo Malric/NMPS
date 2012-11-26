@@ -9,6 +9,7 @@ import sys
 import time
 import RTP
 import os
+import clientdata
        
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -63,7 +64,7 @@ def main():
     clients = []
     rtp_header = []
     # Stream status
-    STREAM = False # Must be present for each client,only one for now,test purpose
+    #STREAM = False # Must be present for each client,only one for now,test purpose
     print 'Streamer ready'
     while True:     
         try:
@@ -80,16 +81,34 @@ def main():
                 print args
                 if args[0] == 'Setup':
                     #rtp = RTP.RTPMessage(random.randint(10000,60000))
-                    clients.append([int(args[1]),int(args[2])]) # Append all active clients to list,Find idea to remove  
+                    c = clientdata.client(int(args[1]), int(args[2]))
+                    clients.append(c) # Append all active clients to list,Find idea to remove
                     unix_socket.sendto('Ok,9000,9001',addr)
                     print 'sent'         
                 elif args[0] == 'Play':
-                    STREAM = True                
+                    for client in clients:
+                        if client.ip == args[2]:
+                            client.stream = True
+                elif args[0] == 'Pause':
+                    for clients in clients:
+                        if client.ip == args[2]:
+                            client.stream = False
+                elif args[0] == 'Teardown':
+                    for clients in clients:
+                        if client.ip == args[2]:
+                            clients.remove[client]
+
             if option is rtcp_socket:
                 data = rtcp_socket.recv(1024)
                 print data
         for client in clients:
-            #rtp.sendto(client[2].createMessage(1,2,4),('::1',client[0]))
+            if client.stream is True: 
+                #rtp.sendto(client[2].createMessage(1,2,4),('::1',client[0]))
+                #should the logic be something of following
+                #if amount of packets sent to client is less than X -> send RTP
+                #else send RTCP sender reports
+            else:
+                #rtp.sendto(client[2].createKeepAliveMessage()),('::1',client[0])
         time.sleep(1) # For now            
         
 if __name__ == "__main__":

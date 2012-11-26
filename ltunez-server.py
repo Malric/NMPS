@@ -127,14 +127,14 @@ class Accept_RTSP(threading.Thread):
                         p.dumpMessage() # Remove,debug
                     elif(p.rtspCommand == "SETUP"):
                         # Exec streamer if not exec-ed previously
-                        if not os.path.exists('Sockets/'+'song.wav'): #name of song must be variable
+                        if not os.path.exists('Sockets/'+p.pathname+'.wav'): #name of song must be variable, have to check if the song needs to be parsed from path
                             pid = os.fork()
                             if pid < 0:
                                 print  'Err'
                             elif pid == 0:
-                                os.execlp('python','python','streamer.py','song.wav') # song argument must be variable
+                                os.execlp('python','python','streamer.py',p.pathname+'.wav') # song argument must be variable
                         time.sleep(5)
-                        rtp,rtcp = setup('song.wav') # song argument must be variable
+                        rtp,rtcp = setup(p.pathname+'.wav') # song argument must be variable
                         self.conn.sendall(p.createSetupReplyMessage(p.cseq, p.transport, p.clientport,rtp + rtcp,458959))
                         p.dumpMessage() # Remove,debug
                     elif(p.rtspCommand == "TEARDOWN"):
