@@ -1,7 +1,7 @@
 ####
 #
 # Playlist generation including MP3 to wav (pcm mu-law) conversion
-# Playlist is randomly generated from the songs that were not in the previous playlist
+# Playlist is randomly generated from the songs that were not in the previous playlist (if possible)
 #
 ####
 
@@ -21,7 +21,7 @@ class Song:
         self.artist = artist
         self.title = title
         self.path = path
-        self.in_last_pl = False # determines if the song was in the last playlist
+        self.in_last_pl = False # determines whether the song was in the last playlist
 
 
 def initSongs():
