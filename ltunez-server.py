@@ -16,57 +16,67 @@ import playlist
 import time
 import scp
 
-class listen():
-    """ Create listening socket, compatible with 'with' method """
-    def __init__(self,PORT):
-        self.PORT = PORT    
-    def __enter__(self):
-        HOST = '127.0.0.1'     # Symbolic name meaning all available interfaces
-        self.s = None
-        for res in socket.getaddrinfo(HOST, self.PORT, socket.AF_UNSPEC,socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
-            af, socktype, proto, canonname, sa = res
-            try:
-                self.s = socket.socket(af, socktype, proto)
-            except socket.error as msg:
-                print msg
-                self.s = None
-                continue
-            try:
-                self.s.bind(sa)
-            except socket.error as msg:
-                print msg                
-                self.s.close()
-                self.s = None
-                continue
-            try:
-                self.s.listen(5)
-            except socket.error as msg:
-                print msg
-                self.s.close()
-                self.s = None
-                continue
-            break
-        return self.s
+def listen(PORT):
+    """ Create listening socket """
+    HOST = None     # Symbolic name meaning all available interfaces
+    PORT = PORT     
+    s = None
+    for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC,socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
+        af, socktype, proto, canonname, sa = res
+        try:
+            s = socket.socket(af, socktype, proto)
+        except socket.error as msg:
+            print 'Server: ',msg
+            s = None
+            continue
+        try:
+            s.bind(sa)
+        except socket.error as msg:
+            print 'Server: ',msg                
+            s.close()
+            s = None
+            continue
+        try:
+            s.listen(5)
+        except socket.error as msg:
+            print 'Server: ',msg
+            s.close()
+            s = None
+            continue
+        break
+    return s
 
-    def __exit__(self,type,value,traceback):
-        if self.s is not None:
-            self.s.close()
-        # Error processing
-
-def setup(song):
-    path = 'Sockets/'+song
-    path_c = 'Sockets/temp'
-    unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    unix_socket.bind(path_c)    
-    unix_socket.connect(path)
-    unix_socket.send('Setup,7000,7001')
-    data = unix_socket.recv(1024)
-    print data
-    unix_socket.close()
-    msg = data.split(',')
-    #if msg[0] is 'Ok':
-    return msg[1],msg[2], unix_socket
-
+def startANDconnect(path):
+    if not os.path.exists('Sockets/'+path):
+        pid = os.fork()
+        if pid < 0:
+            return None
+        elif pid == 0:
+            os.execlp('python','python','streamer.py',path)
+    
+    time.sleep(5)
+    pathtosocket = 'Sockets/'+path
+    try:
+        temp_path = os.tmpnam()
+    except:
+        pass
+    try:
+        unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
+    except socekt.error as msg:
+        print 'RTSP thread unix socket creation',msg
+        return None
+    try: 
+        unixsocket.bind(temp_path)
+    except socket.error as msg:
+        print 'RTSP thread unix socket bind',msg
+        return None
+    try:
+        unixsocket.connect(pathtosocket)
+    except socket.error as msg:
+        print 'RTSP thread unix socket connect',msg
+        return None
+    return unixsocket
+                 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
     def __init__(self,conn,addr):
@@ -100,106 +110,93 @@ class Accept_RTSP(threading.Thread):
 
     def run(self):  
         """ Override base class run() function. """
-        UP = True
-        data = ""
-        inputs = []
-        streamers = {}
-        inputs.append(self.conn)
-        while UP:
-            try:
-                inputready,outputready,exceptready = select.select(inputs,[],[])#timeouts
-            except select.error as msg:
-                print 'RTSP Server: '+str(msg)
-            for option in inputready:
-                if option is self.conn:
-                    data = self.conn.recv(1024)
-                    p = RTSP.RTSPMessage(data)
-                    if p.parse() is False:
-                        inputs.remove(self.conn)
+        data = ''
+        unixsocket = None
+        p = RTSP.RTSPMessage(None)
+        funcPointer = dict()
+        funcPointer["OPTIONS"] = p.createOptionsReplyMessage
+        funcPointer["DESCRIBE"] = p.createDescriptionReplyMessage
+        funcPointer["SETUP"] = p.createSetupReplyMessage
+        funcPointer["TEARDOWN"] = p.createTeardownReplyMessage
+        funcPointer["PLAY"] = p.createPlayReplyMessage
+        funcPointer["PAUSE"] = p.createPauseReplyMessage
+        s = sdp.SDPMessage("Test","23544",7000)
+        u = scp.SCPMessage()
+        ffuncPointer = dict()
+        ffuncPointer["SETUP"] = u.createSetup
+        ffuncPointer["TEARDOWN"] = u.createTeardown
+        ffuncPointer["PLAY"] = u.createPlay
+        ffuncPointer["PAUSE"] = u.createPause
+        while True:
+            data = self.conn.recv(1024)
+            p.fromstring(data)       
+            p.dumpMessage()  
+            if p.parse() is False:
+                self.conn.close()
+                break
+            else:
+                if p.rtspCommand == "SETUP":
+                    print p.pathname
+                    unixsocekt = startANDconnect('jayate.wav')#For now
+                    if unixsocket is None:
                         self.conn.close()
-                        UP = False                
-                    p.dumpMessage() # Remove,debug
-                    if(p.rtspCommand == "OPTIONS"):
-                        # Check if same song is already being streamed.If not,create new streamer.       
-                        self.conn.sendall(p.createOptionsReplyMessage(p.cseq))
-                        p.dumpMessage() # Remove,debug
-                    elif(p.rtspCommand == "DESCRIBE"):
-                        s = sdp.SDPMessage("Test","23544",7000)
-                        self.conn.sendall(p.createDescriptionReplyMessage(p.cseq, p.URI,s.getMessage()))
-                        p.dumpMessage() # Remove,debug
-                    elif(p.rtspCommand == "SETUP"):
-                        # Exec streamer if not exec-ed previously
-                        if not os.path.exists('Sockets/'+p.pathname+'.wav'): #name of song must be variable, have to check if the song needs to be parsed from path
-                            pid = os.fork()
-                            if pid < 0:
-                                print  'Err'
-                            elif pid == 0:
-                                os.execlp('python','python','streamer.py',p.pathname+'.wav') # song argument must be variable
-                        time.sleep(5)
-
-                        rtp,rtcp,unix_socket = setup(p.pathname+'.wav') # song argument must be variable
-                        streamers[p.pathname] = unix_socket #Add song/unix_socket information to dictionary
-                        self.conn.sendall(p.createSetupReplyMessage(p.cseq, p.transport, p.clientport,rtp + rtcp,458959))
-                        p.dumpMessage() # Remove,debug
-                    elif(p.rtspCommand == "TEARDOWN"):
-                        #msg = scp.SCPMessage()
-                        #streamers[p.pathname].send(msg.createTeardown(IP))
-                        self.conn.sendall(p.createTeardownReplyMessage(p.cseq))
-                        p.dumpMessage() # Remove,debug
-                        inputs.remove(self.conn)
-                        self.conn.close()
-                        UP = False
-                    elif(p.rtspCommand == "PLAY"):
-                        #msg = scp.SCPMessage()
-                        #streamers[p.pathname].send(msg.createPlay(IP))
-                        self.conn.sendall(p.createPlayReplyMessage(p.cseq, p.session, p.URI,"", ""))
-                        p.dumpMessage() # Remove,debug
-                    elif(p.rtspCommand == "PAUSE"):
-                        #msg = scp.SCPMessage()
-                        #streamers[p.pathname].send(msg.createPause(IP))
-                        self.conn.sendall(p.createPauseReplyMessage(p.cseq, p.session))
-                        p.dumpMessage() # Remove,debug
-                    else:
-                        print 'Error: RTSP Server,Unknown command'  # create faulty reply
-                        inputs.remove(self.conn)         
-                        self.conn.close()
-                        UP = False
+                        break    
+                if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
+                    try:
+                        unixsocket.send(ffuncPointer[p.rtspCommand](addr[0],"7000","7001"))#change rtp and rtcp to variable
+                    except socket.error as msg:
+                        print 'IPC: ',msg
+                try:
+                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,"9000-90001","455678","",""))
+                except socket.error as msg:
+                    print 'RTSP thread ',msg
+                p.dumpMessage()
+      
 
 def server(port_rtsp,port_playlist):
     """ This function waits for RTSP/Playlist request and starts new thread. """
     playlist.initSongs()    
     inputs = []
-    with listen(port_playlist) as playlist_sock:
-        with listen(port_rtsp) as rtsp_sock:
-            inputs.append(rtsp_sock)
-            inputs.append(playlist_sock)    
-            while True:    
+    rtspsocket = listen(port_rtsp)
+    if rtspsocket is None:
+        sys.exit(1)
+    playlistsocket = listen(port_playlist)
+    if playlistsocket is None:
+        rtspsocket.close()
+        sys.exit(1)
+    inputs.append(rtspsocket)
+    inputs.append(playlistsocket)    
+    while True:    
+        try:
+            inputready,outputready,exceptready = select.select(inputs,[],[])
+        except KeyboardInterrupt:
+            print 'Interrupted by user,exiting'
+            inputs.remove(rtspsocket)
+            inputs.remove(playlistsocket)
+            rtspsocket.close()
+            playlistsocket.close()
+            shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
+            break
+        for option in inputready:
+            if option is rtspsocket:
+                try:            
+                    conn, addr = rtspsocket.accept()
+                except socket.error as msg:
+                    print 'Server: RTSP ',msg
+                    continue
+                print 'Server: RTSP connection from ', addr
+                r = Accept_RTSP(conn,addr)
+                r.start()
+            elif option is playlistsocket:
                 try:
-                    inputready,outputready,exceptready = select.select(inputs,[],[])
-                except select.error as msg:
-                    print 'Error '
-                for option in inputready:
-                    if option is rtsp_sock:
-                        try:            
-                            conn, addr = rtsp_sock.accept()
-                        except socket.error as msg:
-                            print 'Server: RTSP '+str(msg)
-                            continue
-                        print 'Server: RTSP connection from ', addr
-                        r = Accept_RTSP(conn,addr)
-                        r.start()
-                    if option is playlist_sock:
-                        try:
-                            conn,addr = playlist_sock.accept()
-                        except socket.error as msg:
-                            print 'Server: Playlist '+str(msg)
-                            continue
-                        print 'Server: Playlist request from ', addr
-                        p = Accept_PL(conn,addr)
-                        p.start()
-
-    shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
-    
+                    conn,addr = playlistsocket.accept()
+                except socket.error as msg:
+                    print 'Server: Playlist ',msg
+                    continue
+                print 'Server: Playlist request from ', addr
+                p = Accept_PL(conn,addr)
+                p.start()
+   
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--playlist", help="playlist server port", type=int)

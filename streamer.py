@@ -9,8 +9,14 @@ import sys
 import time
 import RTP
 import os
-import clientdata
-       
+import scp
+
+class Client():
+    rtp = 0  # rtp port
+    rtcp = 0 # rtcp port
+    STREAM = False # bool,if streaming on for this client
+    ip = ''
+
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
     HOST = None    # Local host
@@ -38,6 +44,7 @@ def main():
     """ Control section for streamer. """
     # Create unix socket for IPC
     path = 'Sockets/'+sys.argv[1]
+    print path
     if os.path.exists(path): #Caution
         sys.exit(1)
     unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -61,11 +68,11 @@ def main():
     inputs.append(unix_socket) # Add unix socket
     inputs.append(rtcp_socket) # Add rtcp socket
     # List of client
-    clients = []
-    rtp_header = []
+    clients = dict() #dict containing all clients for this song
     # Stream status
-    #STREAM = False # Must be present for each client,only one for now,test purpose
+    STREAM = False # Must be present for each client,only one for now,test purpose
     print 'Streamer ready'
+    s = scp.SCPMessage()
     while True:     
         try:
             inputready,outputready,exceptready = select.select(inputs,[],[],0)
@@ -74,42 +81,30 @@ def main():
         for option in inputready:
             if option is unix_socket:
                 data,addr = unix_socket.recvfrom(1024)
-                print data,addr
-                # print 'Streamer',address
-                # IPC message format: Command,parameter,paremeter,...
-                args = data.split(',')
-                print args
-                if args[0] == 'Setup':
-                    #rtp = RTP.RTPMessage(random.randint(10000,60000))
-                    c = clientdata.client(int(args[1]), int(args[2]))
-                    clients.append(c) # Append all active clients to list,Find idea to remove
-                    unix_socket.sendto('Ok,9000,9001',addr)
-                    print 'sent'         
-                elif args[0] == 'Play':
-                    for client in clients:
-                        if client.ip == args[2]:
-                            client.stream = True
-                elif args[0] == 'Pause':
-                    for clients in clients:
-                        if client.ip == args[2]:
-                            client.stream = False
-                elif args[0] == 'Teardown':
-                    for clients in clients:
-                        if client.ip == args[2]:
-                            clients.remove[client]
-
+                s.parse(data)
+                if s.command == "SETUP":
+                    c = Client()
+                    c.rtp = s.clientRtpPort
+                    c.rtcp = s.clientRtcpPort
+                    c.ip = s.clientIp
+                    cliets[addr] = c
+                elif s.command == "TEARDOWN":
+                    clients.pop(addr)
+                elif s.commad == "PLAY":
+                    client[addr].STREAM = True
+                elif s.command == "PAUSE":
+                    client[addr].STREAM = False	                
             if option is rtcp_socket:
                 data = rtcp_socket.recv(1024)
-                print data
-        for client in clients:
-            if client.stream is True: 
+                print data # For now,lets see how it goes
+        #for option in clients:
+            #if option.STREAM:
+               #pass
                 #rtp.sendto(client[2].createMessage(1,2,4),('::1',client[0]))
-                #should the logic be something of following
-                #if amount of packets sent to client is less than X -> send RTP
-                #else send RTCP sender reports
-            else:
-                #rtp.sendto(client[2].createKeepAliveMessage()),('::1',client[0])
-        time.sleep(1) # For now            
+        #else:
+            #break
+    rtp_socket.close()
+    rtcp_socket.clsoe()
         
 if __name__ == "__main__":
     main()

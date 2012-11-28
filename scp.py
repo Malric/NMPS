@@ -7,7 +7,7 @@ import logging
 
 #RTSP Commands (Supported)
 commands = ["SETUP", "TEARDOWN", "PLAY", "PAUSE"]
-terminator "\r\n\r\n"
+terminator = "\r\n\r\n"
 
 class SCPMessage:
 
@@ -24,21 +24,21 @@ class SCPMessage:
         self.rtpRegex = re.compile(r'rtp: (.*)$', re.IGNORECASE)
         self.rtcpRegex = re.compile(r'rtcp: (.*)$', re.IGNORECASE)
 
-    def createPlay(self, ip):
+    def createPlay(self, ip,UNWANTED2,UNWANTED3):
     	self.command = "PLAY"
     	self.clientIp = ip
     	self.message = self.command + " "+self.protocol+"\r\n"
     	self.message += "ip: "+self.clientIp+terminator
     	return self.message
 
-    def createPause(self, ip):
+    def createPause(self, ip,UNWANTED2,UNWANTED3):
     	self.command = "PAUSE"
     	self.clientIp = ip
     	self.message = self.command + " "+self.protocol+"\r\n"
     	self.message += "ip: "+self.clientIp+terminator
     	return self.message
 
-    def createTeardown(self, ip):
+    def createTeardown(self, ip,UNWANTED2,UNWANTED3):
     	self.command = "TEARDOWN"
     	self.clientIp = ip
     	self.message = self.command + " "+self.protocol+"\r\n"
@@ -67,7 +67,7 @@ class SCPMessage:
         except ValueError:
             return False
 
-       if protocol != self.protocol:
+        if protocol != self.protocol:
             return False
 
         if command not in commands:
@@ -76,7 +76,7 @@ class SCPMessage:
         self.command = command
 
         for line in lines:
-        	hits = self.ipRegex.search(line)
+            hits = self.ipRegex.search(line)
             if hits is not None:
                 self.clientIp = hits.group(1)
             hits = self.rtpRegex.search(line)

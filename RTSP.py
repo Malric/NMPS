@@ -11,7 +11,7 @@ import logging
 #RTSP Commands (Supported)
 commands = ["OPTIONS", "DESCRIBE", "SETUP", "TEARDOWN", "PLAY", "PAUSE"]
 
-class RTSPMessage:
+class RTSPMessage():
 
     def __init__(self, message):
         self.rtspCommand = ""
@@ -152,7 +152,7 @@ class RTSPMessage:
     ##
     # Description reply message
     ##
-    def createDescriptionReplyMessage(self, cseq, URI, SDP):
+    def createDescriptionReplyMessage(self, cseq, URI, SDP,UNWANTED4,UNWANTED5,UNWANTED6,UNWANTED7,UNWANTED8,UNWANTED9):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Content-Base: "+URI+"\r\n"
         self.rtspMsg += "Content-Type: application/sdp\r\n"
@@ -163,19 +163,19 @@ class RTSPMessage:
     ##
     # Setup Reply Message
     ##
-    def createSetupReplyMessage(self, cseq, transport, clientport, serverport,session):
+    def createSetupReplyMessage(self, cseq,UNWANTED2,UNWANTED3,transport, clientport, serverport,session,UNWANTED8,UNWANTED9):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Transport: "+transport
         self.rtspMsg += "client_port="+clientport+";"
         self.rtspMsg += "server_port="+serverport+"\r\n"
-        self.rtspMsg += "Session: "+str(session)+"\r\n"
+        self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg += "\r\n"
         return self.rtspMsg
 
     ##
     # Play reply message
     ##
-    def createPlayReplyMessage(self, cseq, session, URI, seq, rtptime):
+    def createPlayReplyMessage(self, cseq,URI,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,session, seq, rtptime):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg += "RTP-Info: "
@@ -188,7 +188,7 @@ class RTSPMessage:
     ##
     # Pause reply message
     ##
-    def createPauseReplyMessage(self, cseq, session):
+    def createPauseReplyMessage(self, cseq,UNWANTED2,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6, session,UNWANTED8,UNWANTED9):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg +="\r\n"
@@ -197,7 +197,7 @@ class RTSPMessage:
     ##
     # Options reply message
     ##
-    def createOptionsReplyMessage(self, cseq):
+    def createOptionsReplyMessage(self, cseq,UNWANTED2,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,UNWANTED7,UNWANTED8,UNWANTED9):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Public: "
         for command in commands[1:]:
@@ -208,7 +208,7 @@ class RTSPMessage:
     ##
     # Teardown reply message.
     ##
-    def createTeardownReplyMessage(self, cseq):
+    def createTeardownReplyMessage(self, cseq,UNWANTED2,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,UNWANTED7,UNWANTED8,UNWANTED9):
         self.createReplyHeader(cseq)
         self.rtspMsg += "\r\n"
         return self.rtspMsg
