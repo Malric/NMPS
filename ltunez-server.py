@@ -15,6 +15,7 @@ import sdp
 import playlist
 import time
 import scp
+import tempfile
 
 def listen(PORT):
     """ Create listening socket """
@@ -53,13 +54,16 @@ def startANDconnect(path):
             return None
         elif pid == 0:
             os.execlp('python','python','streamer.py',path)
-    
+    print 'Forked'
     time.sleep(5)
     pathtosocket = 'Sockets/'+path
-    try:
-        temp_path = os.tmpnam()
-    except:
-        pass
+    print 'server',path
+    #temp_path = os.tmpnam()
+    #temp,temp_path = tempfile.mkstemp()
+    #os.close(temp)
+    temp_path ='/tmp/kjlkjl'
+    print temp_path
+    #print temp,temp_path
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
     except socekt.error as msg:
@@ -136,18 +140,19 @@ class Accept_RTSP(threading.Thread):
                 break
             else:
                 if p.rtspCommand == "SETUP":
-                    print p.pathname
-                    unixsocekt = startANDconnect('jayate.wav')#For now
+                    unixsocket = startANDconnect('jayate.wav')#For now
+                    print unixsocket                    
                     if unixsocket is None:
                         self.conn.close()
                         break    
                 if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
                     try:
-                        unixsocket.send(ffuncPointer[p.rtspCommand](addr[0],"7000","7001"))#change rtp and rtcp to variable
+                        unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],"7000","7001"))#change rtp and rtcp to variable
                     except socket.error as msg:
                         print 'IPC: ',msg
+                print p.rtspCommand
                 try:
-                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,"9000-90001","455678","",""))
+                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,"9000-90001","455678","4566",""))
                 except socket.error as msg:
                     print 'RTSP thread ',msg
                 p.dumpMessage()

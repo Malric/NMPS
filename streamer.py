@@ -15,7 +15,10 @@ class Client():
     rtp = 0  # rtp port
     rtcp = 0 # rtcp port
     STREAM = False # bool,if streaming on for this client
-    ip = ''
+    ip = '' # # Client ip
+    index = 0 # song byte index
+    sequence = 1000
+    timestamp = 2000
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -72,7 +75,10 @@ def main():
     # Stream status
     STREAM = False # Must be present for each client,only one for now,test purpose
     print 'Streamer ready'
-    s = scp.SCPMessage()
+    rr = RTP.RTPMessage(24567)
+    f = os.open('Wavs/Jayate.wav',os.O_RDONLY )
+    song = os.read(f,10000)
+    os.close(f)
     while True:     
         try:
             inputready,outputready,exceptready = select.select(inputs,[],[],0)
@@ -81,28 +87,30 @@ def main():
         for option in inputready:
             if option is unix_socket:
                 data,addr = unix_socket.recvfrom(1024)
-                s.parse(data)
-                if s.command == "SETUP":
+                m = scp.SCPMessage()
+                t = m.parse(data)
+                if m.command == "SETUP":
                     c = Client()
-                    c.rtp = s.clientRtpPort
-                    c.rtcp = s.clientRtcpPort
-                    c.ip = s.clientIp
-                    cliets[addr] = c
-                elif s.command == "TEARDOWN":
+                    c.rtp = m.clientRtpPort
+                    c.rtcp = m.clientRtcpPort
+                    c.ip = m.clientIp
+                    clients[addr] = c
+                elif m.command == "TEARDOWN":
                     clients.pop(addr)
-                elif s.commad == "PLAY":
-                    client[addr].STREAM = True
-                elif s.command == "PAUSE":
-                    client[addr].STREAM = False	                
+                elif m.command == "PLAY":
+                    clients[addr].STREAM = True
+                elif m.command == "PAUSE":
+                    clients[addr].STREAM = False	                
             if option is rtcp_socket:
                 data = rtcp_socket.recv(1024)
                 print data # For now,lets see how it goes
-        #for option in clients:
-            #if option.STREAM:
-               #pass
-                #rtp.sendto(client[2].createMessage(1,2,4),('::1',client[0]))
-        #else:
-            #break
+        vs = clients.values()
+        for v in vs:
+            if v.STREAM:
+                rtp_socket.sendto(rr.createMessage(v.sequence,v.timestamp,0)+song[v.index:v.index+63],(v.ip,int(v.rtp)))
+                v.index = v.index + 64
+                v.sequence = v.sequence + 1
+                v.timestamp = v.timestamp + 64        
     rtp_socket.close()
     rtcp_socket.clsoe()
         
