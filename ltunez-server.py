@@ -124,7 +124,7 @@ class Accept_RTSP(threading.Thread):
         funcPointer["TEARDOWN"] = p.createTeardownReplyMessage
         funcPointer["PLAY"] = p.createPlayReplyMessage
         funcPointer["PAUSE"] = p.createPauseReplyMessage
-        s = sdp.SDPMessage("Test","23544",7000)
+        s = sdp.SDPMessage("Test","23544",0)
         u = scp.SCPMessage()
         ffuncPointer = dict()
         ffuncPointer["SETUP"] = u.createSetup
@@ -147,12 +147,13 @@ class Accept_RTSP(threading.Thread):
                         break    
                 if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
                     try:
-                        unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],"7000","7001"))#change rtp and rtcp to variable
+                        r1,r2 = p.clientport.split('-')
+                        unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],r1,r2))#change rtp and rtcp to variable
                     except socket.error as msg:
                         print 'IPC: ',msg
                 print p.rtspCommand
                 try:
-                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,"9000-90001","455678","4566",""))
+                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,"9000-90001","23544","4566","0"))
                 except socket.error as msg:
                     print 'RTSP thread ',msg
                 p.dumpMessage()
@@ -180,7 +181,7 @@ def server(port_rtsp,port_playlist):
             inputs.remove(playlistsocket)
             rtspsocket.close()
             playlistsocket.close()
-            shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
+            #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
             break
         for option in inputready:
             if option is rtspsocket:

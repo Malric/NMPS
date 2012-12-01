@@ -10,6 +10,8 @@ import time
 import RTP
 import os
 import scp
+import wave
+import ctypes
 
 class Client():
     rtp = 0  # rtp port
@@ -22,7 +24,7 @@ class Client():
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
-    HOST = None    # Local host
+    HOST = '127.0.0.1'    # Local host
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res
@@ -76,9 +78,15 @@ def main():
     STREAM = False # Must be present for each client,only one for now,test purpose
     print 'Streamer ready'
     rr = RTP.RTPMessage(24567)
-    f = os.open('Wavs/Jayate.wav',os.O_RDONLY )
-    song = os.read(f,10000)
-    os.close(f)
+    f = None
+    try:
+        f = wave.open('Wavs/jayate.wav','rb' )
+    except wave.Error as msg:
+        print 'Wav open ',msg    
+    song = f.readframes(f.getnframes())
+    f.close()
+    print rtp_socket.getsockname()
+    count = 0
     while True:     
         try:
             inputready,outputready,exceptready = select.select(inputs,[],[],0)
@@ -107,10 +115,19 @@ def main():
         vs = clients.values()
         for v in vs:
             if v.STREAM:
-                rtp_socket.sendto(rr.createMessage(v.sequence,v.timestamp,0)+song[v.index:v.index+63],(v.ip,int(v.rtp)))
-                v.index = v.index + 64
+                mmm = rr.createMessage(v.sequence,v.timestamp,0)
+                packet = buffer(mmm)
+                packet = packet + song[v.index:v.index+32]
+                print 'Size',len(packet)
+                rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
+                print 'Add',v.ip,v.rtp
+                v.index = v.index + 32
                 v.sequence = v.sequence + 1
-                v.timestamp = v.timestamp + 64        
+                v.timestamp = v.timestamp + 32  
+                count = count + 1
+        #time.sleep(1)      
+        if count > 10000:
+            break
     rtp_socket.close()
     rtcp_socket.clsoe()
         
