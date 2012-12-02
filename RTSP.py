@@ -152,7 +152,7 @@ class RTSPMessage():
     ##
     # Description reply message
     ##
-    def createDescriptionReplyMessage(self, cseq, URI, SDP,UNWANTED4,UNWANTED5,UNWANTED6,UNWANTED7,UNWANTED8,UNWANTED9):
+    def createDescriptionReplyMessage(self, cseq, URI, SDP):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Content-Base: "+URI+"\r\n"
         self.rtspMsg += "Content-Type: application/sdp\r\n"
@@ -163,7 +163,7 @@ class RTSPMessage():
     ##
     # Setup Reply Message
     ##
-    def createSetupReplyMessage(self, cseq,UNWANTED2,UNWANTED3,transport, clientport, serverport,session,UNWANTED8,UNWANTED9):
+    def createSetupReplyMessage(self, cseq, transport, clientport, serverport,session):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Transport: "+transport
         self.rtspMsg += "client_port="+clientport+";"
@@ -175,7 +175,7 @@ class RTSPMessage():
     ##
     # Play reply message
     ##
-    def createPlayReplyMessage(self, cseq,URI,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,session, seq, rtptime):
+    def createPlayReplyMessage(self, cseq,URI, session, seq, rtptime):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg += "RTP-Info: "
@@ -188,7 +188,7 @@ class RTSPMessage():
     ##
     # Pause reply message
     ##
-    def createPauseReplyMessage(self, cseq,UNWANTED2,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6, session,UNWANTED8,UNWANTED9):
+    def createPauseReplyMessage(self, cseq, session):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg +="\r\n"
@@ -197,7 +197,7 @@ class RTSPMessage():
     ##
     # Options reply message
     ##
-    def createOptionsReplyMessage(self, cseq,UNWANTED2,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,UNWANTED7,UNWANTED8,UNWANTED9):
+    def createOptionsReplyMessage(self, cseq):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Public: "
         for command in commands[1:]:
@@ -208,7 +208,7 @@ class RTSPMessage():
     ##
     # Teardown reply message.
     ##
-    def createTeardownReplyMessage(self, cseq,UNWANTED2,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,UNWANTED7,UNWANTED8,UNWANTED9):
+    def createTeardownReplyMessage(self, cseq):
         self.createReplyHeader(cseq)
         self.rtspMsg += "\r\n"
         return self.rtspMsg

@@ -3,10 +3,10 @@
 ####
 
 import re
-import logging
+#import logging
 
 #RTSP Commands (Supported)
-commands = ["SETUP", "TEARDOWN", "PLAY", "PAUSE"]
+commands = ["SETUP", "TEARDOWN", "PLAY", "PAUSE", "PORTS"]
 terminator = "\r\n\r\n"
 
 class SCPMessage:
@@ -24,42 +24,51 @@ class SCPMessage:
         self.rtpRegex = re.compile(r'rtp: (.*)$', re.IGNORECASE)
         self.rtcpRegex = re.compile(r'rtcp: (.*)$', re.IGNORECASE)
 
-    def createPlay(self, ip,UNWANTED2,UNWANTED3):
-    	self.command = "PLAY"
-    	self.clientIp = ip
-    	self.message = self.command + " "+self.protocol+"\r\n"
-    	self.message += "ip: "+self.clientIp+terminator
-    	return self.message
+    def createPlay(self, ip):
+        self.command = "PLAY"
+        self.clientIp = ip
+        self.message = self.command + " "+self.protocol+"\r\n"
+        self.message += "ip: "+self.clientIp+terminator
+        return self.message
 
-    def createPause(self, ip,UNWANTED2,UNWANTED3):
-    	self.command = "PAUSE"
-    	self.clientIp = ip
-    	self.message = self.command + " "+self.protocol+"\r\n"
-    	self.message += "ip: "+self.clientIp+terminator
-    	return self.message
+    def createPause(self, ip):
+        self.command = "PAUSE"
+        self.clientIp = ip
+        self.message = self.command + " "+self.protocol+"\r\n"
+        self.message += "ip: "+self.clientIp+terminator
+        return self.message
 
-    def createTeardown(self, ip,UNWANTED2,UNWANTED3):
-    	self.command = "TEARDOWN"
-    	self.clientIp = ip
-    	self.message = self.command + " "+self.protocol+"\r\n"
-    	self.message += "ip: "+self.clientIp+terminator
-    	return self.message
+    def createTeardown(self, ip):
+        self.command = "TEARDOWN"
+        self.clientIp = ip
+        self.message = self.command + " "+self.protocol+"\r\n"
+        self.message += "ip: "+self.clientIp+terminator
+        return self.message
 
     def createSetup(self, ip, rtpPort, rtcpPort):
-    	self.command = "SETUP"
-    	self.clientIp = ip
-    	self.clientRtpPort = rtpPort
-    	self.clientRtcpPort = rtcpPort
-    	self.message = self.command + " "+self.protocol+"\r\n"
-    	self.message += "ip: "+self.clientIp+"\r\n"
-    	self.message += "rtp: "+self.clientRtpPort+"\r\n"
-    	self.message += "rtcp: "+self.clientRtcpPort+terminator
-    	return self.message
+        self.command = "SETUP"
+        self.clientIp = ip
+        self.clientRtpPort = rtpPort
+        self.clientRtcpPort = rtcpPort
+        self.message = self.command + " "+self.protocol+"\r\n"
+        self.message += "ip: "+self.clientIp+"\r\n"
+        self.message += "rtp: "+self.clientRtpPort+"\r\n"
+        self.message += "rtcp: "+self.clientRtcpPort+terminator
+        return self.message
 
-  	def parse(self,message):
-  		self.message = message
+    def createPort(self, rtpPort, rtcpPort):
+        self.command = "PORTS"
+        self.clientRtpPort = rtpPort
+        self.clientRtcpPort = rtcpPort
+        self.message = self.command + " "+self.protocol+"\r\n"
+        self.message += "rtp: "+self.clientRtpPort+"\r\n"
+        self.message += "rtcp: "+self.clientRtcpPort+terminator
+        return self.message
+    
+    def parse(self,message):
+        self.message = message
 
-  		lines = self.message.split('\r\n')
+        lines = self.message.split('\r\n')
                    
         #Line 1: Command, Protocol
         try:
