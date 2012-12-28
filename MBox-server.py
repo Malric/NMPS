@@ -12,7 +12,6 @@ def server(port_sip):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.bind((HOST, PORT))
     server_ip = socket.gethostbyname(socket.gethostname())
-    print 
     while 1:
         try:
             data, addr = s.recvfrom(1024)
@@ -36,7 +35,7 @@ def server(port_sip):
                     sent = s.sendto(reply, addr)
                     print >>sys.stderr, "Sent %s bytes to %s" % (sent, addr)
                 elif sip_inst.SIPCommand == "BYE":
-                    reply = sip_inst.createByeReplyMessage()
+                    reply = sip_inst.createByeReplyMessage(server_ip)
                     print "Sending bye reply:"
                     print reply
                     sent = s.sendto(reply, addr)

@@ -24,5 +24,5 @@ class SDPMessage:
         self.SDPMsg += "c=" + self.c + terminator
         self.SDPMsg += "t=" + self.t + terminator
         self.SDPMsg += "m=" + self.m + terminator
-        self.SDPMsg += "a=" + self.a #+ terminator
+        self.SDPMsg += "a=" + self.a + terminator
         
