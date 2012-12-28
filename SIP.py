@@ -117,7 +117,7 @@ class SIPMessage:
         temp = self.via.split(";", 3)
         temp2 = self.fr.split(";",2)
         self.SIPMsg += "Via: " + temp[0] + ";rport=" + temp[0].split(":", 2)[1] + ";" + temp[2] + terminator
-        self.SIPMsg += "From: " + temp2[0] + terminator
+        self.SIPMsg += "From: " + temp2[0]+";"+temp2[1] + terminator
         self.SIPMsg += "To: " + self.to +terminator #+ ";tag=a6c85cf" + "\r\n
         self.SIPMsg += "Call-ID: " + self.callID + terminator
         self.SIPMsg += "CSeq: " + self.cSeq + terminator
@@ -135,7 +135,7 @@ class SIPMessage:
         temp = self.via.split(";", 3)
         temp2 = self.fr.split(";",2)
         self.SIPMsg += "Via: " + temp[0] + ";rport=" + temp[0].split(":", 2)[1] + ";" + temp[2] + terminator
-        self.SIPMsg += "From: " + temp2[0] + terminator
+        self.SIPMsg += "From: " + temp2[0]+";"+temp2[1] + terminator
         self.SIPMsg += "To: " + self.to +terminator #+ ";tag=a6c85cf" + "\r\n
         self.SIPMsg += "Call-ID: " + self.callID + terminator
         self.SIPMsg += "CSeq: " + self.cSeq + terminator
