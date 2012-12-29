@@ -6,7 +6,7 @@
 import re
 import urllib
 import urlparse
-import logging
+#import logging
 
 #RTSP Commands (Supported)
 commands = ["OPTIONS", "DESCRIBE", "SETUP", "TEARDOWN", "PLAY", "PAUSE"]
@@ -178,7 +178,7 @@ class RTSPMessage():
     ##
     # Play reply message
     ##
-    def createPlayReplyMessage(elf, cseq,URI,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,session, seq, rtptime):
+    def createPlayReplyMessage(self, cseq,URI,UNWANTED3,UNWANTED4,UNWANTED5,UNWANTED6,session, seq, rtptime):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg += "RTP-Info: "
