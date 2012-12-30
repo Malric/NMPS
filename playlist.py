@@ -8,8 +8,8 @@
 import os
 import errno
 import random
-#from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
-#import eyeD3
+from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
+import eyeD3
 import wav
 
 songs = []
