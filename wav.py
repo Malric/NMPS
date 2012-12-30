@@ -70,3 +70,13 @@ class Wave():
             data = f.read()
             f.close()
         return data
+
+    def getDuration(self):
+        """" Duration of the wav-file in seconds"""
+        frames = getnframes()
+        framesInSecond = getsamplerate()
+        if framesInSecond != 0:
+            return frames/(float)framesInSecond
+        else
+            return 0
+

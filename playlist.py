@@ -10,6 +10,7 @@ import errno
 import random
 from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
 import eyeD3
+import wav
 
 songs = []
 
@@ -65,7 +66,8 @@ def initSongsWav():
         temp = wav_filename.split(".",2)
         artist = temp[0].split("#",2)[0]
         title = "Message "+temp[1]
-        length = 1 #Wav.getDuration(wav_path)
+        wave = Wav(wav_path)  
+        length = wave.getDuration()
         song = Song(length, artist, title, wav_path)
         songs.append(song)
 
