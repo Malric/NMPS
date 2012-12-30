@@ -56,7 +56,36 @@ def initSongs():
         song = Song(length, tag.getArtist(), tag.getTitle(), wav_path)
         songs.append(song)
 
+def initSongsWav():
+    """ This function reads wav files and Song objects into 'songs' list."""
+    global songs
+    wav_filenames = os.listdir("Wavs")
+    for wav_filename in wav_filenames:
+        wav_path = "Wavs/"+wav_filename
+        temp = wav_filename.split(".",2)
+        artist = temp[0].split("#",2)[0]
+        title = "Message "+temp[1]
+        length = 1 #Wav.getDuration(wav_path)
+        song = Song(length, artist, title, wav_path)
+        songs.append(song)
 
+#TODO: ADD IP/PORT
+def getRecordList():
+    """ This function returns a recordlist string in M3U format."""
+    global songs
+
+    pl_idxs = []
+    i = 0
+    for 
+    playlist = "#EXTM3U\r\n"
+
+    for song in songs:
+        playlist += "#EXTINF:" + song.length + ", " + song.artist + " - " + song.title +"\r\nrtsp://ip:port/"+ song.path.strip("Wavs/")+"\r\n"
+
+    return playlist
+
+
+#TODO: ADD IP/PORT
 def getPlaylist(size):
     """ This function returns a playlist string in M3U format. Playlist size is defined by 'size' parameter """
     global songs
