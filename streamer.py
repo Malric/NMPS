@@ -12,6 +12,7 @@ import os
 import scp
 import wave
 import ctypes
+import wav
 
 class Client():
     rtp = 0  # rtp port
@@ -78,13 +79,9 @@ def main():
     STREAM = False # Must be present for each client,only one for now,test purpose
     print 'Streamer ready'
     rr = RTP.RTPMessage(24567)
-    f = None
-    try:
-        f = wave.open('Wavs/jayate.wav','rb' )
-    except wave.Error as msg:
-        print 'Wav open ',msg    
-    song = f.readframes(f.getnframes())
-    f.close()
+    wavef = wav.Wave('Wavs/song.wav')
+    song = wavef.getdata()
+    mysize = wavef.getnframes()
     print rtp_socket.getsockname()
     count = 0
     while True:     
@@ -114,20 +111,19 @@ def main():
                 print data # For now,lets see how it goes
         vs = clients.values()
         for v in vs:
-            if v.STREAM:
+            if v.STREAM and v.index < mysize:
                 mmm = rr.createMessage(v.sequence,v.timestamp,0)
                 packet = buffer(mmm)
-                packet = packet + song[v.index:v.index+32]
+                packet = packet + song[v.index:v.index+8000]
                 print 'Size',len(packet)
                 rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
                 print 'Add',v.ip,v.rtp
-                v.index = v.index + 32
+                v.index = v.index + 8000
                 v.sequence = v.sequence + 1
-                v.timestamp = v.timestamp + 32  
+                v.timestamp = v.timestamp + 8000  
                 count = count + 1
-        #time.sleep(1)      
-        if count > 10000:
-            break
+                #v.STREAM = False
+        time.sleep(1)      
     rtp_socket.close()
     rtcp_socket.clsoe()
         

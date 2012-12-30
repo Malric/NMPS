@@ -24,21 +24,21 @@ class SCPMessage:
         self.rtpRegex = re.compile(r'rtp: (.*)$', re.IGNORECASE)
         self.rtcpRegex = re.compile(r'rtcp: (.*)$', re.IGNORECASE)
 
-    def createPlay(self, ip):
+    def createPlay(self, ip, UNUSED3, UNUSED4):
         self.command = "PLAY"
         self.clientIp = ip
         self.message = self.command + " "+self.protocol+"\r\n"
         self.message += "ip: "+self.clientIp+terminator
         return self.message
 
-    def createPause(self, ip):
+    def createPause(self, ip, UNUSED3, UNUSED4):
         self.command = "PAUSE"
         self.clientIp = ip
         self.message = self.command + " "+self.protocol+"\r\n"
         self.message += "ip: "+self.clientIp+terminator
         return self.message
 
-    def createTeardown(self, ip):
+    def createTeardown(self, ip, UNUSED3, UNUSED4):
         self.command = "TEARDOWN"
         self.clientIp = ip
         self.message = self.command + " "+self.protocol+"\r\n"
@@ -56,7 +56,7 @@ class SCPMessage:
         self.message += "rtcp: "+self.clientRtcpPort+terminator
         return self.message
 
-    def createPort(self, rtpPort, rtcpPort):
+    def createPort(self, UNUSED2, rtpPort, rtcpPort):
         self.command = "PORTS"
         self.clientRtpPort = rtpPort
         self.clientRtcpPort = rtcpPort
