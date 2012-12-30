@@ -58,34 +58,33 @@ def initSongs():
         songs.append(song)
 
 def initSongsWav():
-    """ This function reads wav files and Song objects into 'songs' list."""
+    """ This function reads wav files and Song objects into 'songs' list. Used in MBox"""
     global songs
     wav_filenames = os.listdir("Wavs")
     for wav_filename in wav_filenames:
-        wav_path = "Wavs/"+wav_filename
-        temp = wav_filename.split(".",2)
-        temp2 = temp[0].split("#",2)
-        artist = temp2[0]
-        title = "Message "+temp2[1]
-        wave = wav.Wave(wav_path)  
-        length = wave.getDuration()
-        song = Song(length, artist, title, wav_path)
-        songs.append(song)
+        if ".wav" in wav_filename:
+            wav_path = "Wavs/"+wav_filename
+            temp = wav_filename.split(".",2)
+            temp2 = temp[0].split("#",2)
+            artist = temp2[0]
+            title = "Message "+temp2[1]
+            wave = wav.Wave(wav_path)  
+            length = wave.getDuration()
+            song = Song(length, artist, title, wav_path)
+            songs.append(song)
 
-#TODO: ADD IP/PORT
-def getRecordList():
-    """ This function returns a recordlist string in M3U format."""
+def getRecordList(ip, port):
+    """ This function returns a recordlist string in M3U format. Used in MBox"""
     global songs
 
     playlist = "#EXTM3U\r\n"
 
     for song in songs:
-        playlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://ip:port/"+ song.path.lstrip("Wavs/")+"\r\n"
+        playlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://"+ip+":"+port+"/"+ song.path.lstrip("Wavs/")+"\r\n"
 
     return playlist
 
-#TODO: ADD IP/PORT
-def getPlaylist(size):
+def getPlaylist(size, ip, port):
     """ This function returns a playlist string in M3U format. Playlist size is defined by 'size' parameter """
     global songs
     
@@ -114,7 +113,7 @@ def getPlaylist(size):
         i = songs[idx].path.rfind("/")
         wav_filename = songs[idx].path[i+1:]
         print "Playlist Server: Adding '" + wav_filename + "' to playlist"
-        playlist += "#EXTINF:" + songs[idx].length + ", " + songs[idx].artist + " - " + songs[idx].title + "\r\nrtsp://ip:port/" + wav_filename + "\r\n"
+        playlist += "#EXTINF:" + songs[idx].length + ", " + songs[idx].artist + " - " + songs[idx].title + "\r\nrtsp://"+ip+":"+port+"/" + wav_filename + "\r\n"
         songs[idx].in_last_pl = True
         
     return playlist

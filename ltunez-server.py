@@ -83,7 +83,7 @@ def startANDconnect(path):
                  
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
-    def __init__(self,conn,addr):
+    def __init__(self,conn,addr, port_rtsp):
         """ Initialize with socket and address. """
         threading.Thread.__init__(self)
         self.conn = conn
@@ -96,7 +96,7 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
             print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(5)
+            pl = playlist.getPlaylist(5, socket.gethostbyname(socket.gethostname()), port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
             print "Playlist Server: Sending playlist"
             self.conn.sendall(reply)
@@ -200,7 +200,7 @@ def server(port_rtsp,port_playlist):
                     print 'Server: Playlist ',msg
                     continue
                 print 'Server: Playlist request from ', addr
-                p = Accept_PL(conn,addr)
+                p = Accept_PL(conn,addr,port_rtsp)
                 p.start()
    
 if __name__ == "__main__":
