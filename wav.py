@@ -73,10 +73,10 @@ class Wave():
 
     def getDuration(self):
         """" Duration of the wav-file in seconds"""
-        frames = getnframes()
-        framesInSecond = getsamplerate()
+        frames = self.getnframes()
+        framesInSecond = float(self.getsamplerate())
         if framesInSecond != 0:
-            return frames/(float)framesInSecond
-        else
+            return int(round(frames/framesInSecond))
+        else:
             return 0
 

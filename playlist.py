@@ -8,8 +8,8 @@
 import os
 import errno
 import random
-from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
-import eyeD3
+#from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
+#import eyeD3
 import wav
 
 songs = []
@@ -64,9 +64,10 @@ def initSongsWav():
     for wav_filename in wav_filenames:
         wav_path = "Wavs/"+wav_filename
         temp = wav_filename.split(".",2)
-        artist = temp[0].split("#",2)[0]
-        title = "Message "+temp[1]
-        wave = Wav(wav_path)  
+        temp2 = temp[0].split("#",2)
+        artist = temp2[0]
+        title = "Message "+temp2[1]
+        wave = wav.Wave(wav_path)  
         length = wave.getDuration()
         song = Song(length, artist, title, wav_path)
         songs.append(song)
@@ -76,16 +77,12 @@ def getRecordList():
     """ This function returns a recordlist string in M3U format."""
     global songs
 
-    pl_idxs = []
-    i = 0
-    for 
     playlist = "#EXTM3U\r\n"
 
     for song in songs:
-        playlist += "#EXTINF:" + song.length + ", " + song.artist + " - " + song.title +"\r\nrtsp://ip:port/"+ song.path.strip("Wavs/")+"\r\n"
+        playlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://ip:port/"+ song.path.lstrip("Wavs/")+"\r\n"
 
     return playlist
-
 
 #TODO: ADD IP/PORT
 def getPlaylist(size):
