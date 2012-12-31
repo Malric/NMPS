@@ -144,6 +144,7 @@ class RTSPMessage():
         #urlSections[0] == scheme, [1] == netlocation, [2] == path
         #[1:] to remove prepended /
         self.pathname = uriSections[2][1:]
+        self.pathname = self.pathname[0:len(self.pathname)-1]
 
     def dumpMessage(self):
         #Convert using logging methods

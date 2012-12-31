@@ -20,8 +20,8 @@ class Client():
     STREAM = False # bool,if streaming on for this client
     ip = '' # # Client ip
     index = 0 # song byte index
-    sequence = 1000
-    timestamp = 2000
+    sequence = random.randint(1,10000)
+    timestamp = random.randint(1,10000)
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -50,7 +50,6 @@ def main():
     """ Control section for streamer. """
     # Create unix socket for IPC
     path = 'Sockets/'+sys.argv[1]
-    print path
     if os.path.exists(path): #Caution
         sys.exit(1)
     unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
@@ -58,8 +57,7 @@ def main():
     # Create rtp and rtcp socket
     while True:
         while True:
-            #port = random.randint(10000,65000)
-            port = 9000
+            port = random.randint(10000,65000)
             rtp_socket = bind(port)
             if rtp_socket is None:
                 continue
@@ -73,17 +71,14 @@ def main():
     inputs = []
     inputs.append(unix_socket) # Add unix socket
     inputs.append(rtcp_socket) # Add rtcp socket
+    # Is list filled once
+    ONCE = False
     # List of client
     clients = dict() #dict containing all clients for this song
-    # Stream status
-    STREAM = False # Must be present for each client,only one for now,test purpose
-    print 'Streamer ready'
-    rr = RTP.RTPMessage(24567)
-    wavef = wav.Wave('Wavs/song.wav')
+    rtpheader = RTP.RTPMessage(24567)
+    wavef = wav.Wave('Wavs/'+sys.argv[1])
     song = wavef.getdata()
-    mysize = wavef.getnframes()
-    print rtp_socket.getsockname()
-    count = 0
+    songsize = wavef.getnframes()
     while True:     
         try:
             inputready,outputready,exceptready = select.select(inputs,[],[],0)
@@ -95,11 +90,13 @@ def main():
                 m = scp.SCPMessage()
                 t = m.parse(data)
                 if m.command == "SETUP":
+                    ONCE = True
                     c = Client()
                     c.rtp = m.clientRtpPort
                     c.rtcp = m.clientRtcpPort
                     c.ip = m.clientIp
                     clients[addr] = c
+                    unix_socket.sendto(m.createPort(None,str(port),str(port+1)),addr)
                 elif m.command == "TEARDOWN":
                     clients.pop(addr)
                 elif m.command == "PLAY":
@@ -108,26 +105,26 @@ def main():
                     clients[addr].STREAM = False	                
             if option is rtcp_socket:
                 data = rtcp_socket.recv(1024)
-                print data # For now,lets see how it goes
+                pass                 
+                #print data # For now,lets see how it goes
         vs = clients.values()
         for v in vs:
-            if v.STREAM and v.index < mysize:
-                mmm = rr.createMessage(v.sequence,v.timestamp,0)
-                packet = buffer(mmm)
+            if v.STREAM and v.index < songsize:
+                buff = rtpheader.createMessage(v.sequence,v.timestamp,0)
+                packet = buffer(buff)
                 packet = packet + song[v.index:v.index+8000]
-                print 'Size',len(packet)
                 rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
-                print 'Add',v.ip,v.rtp
                 v.index = v.index + 8000
                 v.sequence = v.sequence + 1
                 v.timestamp = v.timestamp + 8000  
-                count = count + 1
-                #v.STREAM = False
         time.sleep(1)      
+        if ONCE and len(clients) == 0:
+            break
+    unix_socket.close()
+    os.remove(path)
     rtp_socket.close()
-    rtcp_socket.clsoe()
+    rtcp_socket.close()
         
 if __name__ == "__main__":
     main()
-
 
