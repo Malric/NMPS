@@ -58,12 +58,7 @@ def startANDconnect(path):
     time.sleep(5)
     pathtosocket = 'Sockets/'+path
     print 'server',path
-    #temp_path = os.tmpnam()
-    #temp,temp_path = tempfile.mkstemp()
-    #os.close(temp)
-    temp_path ='/tmp/kjlkjl'
-    print temp_path
-    #print temp,temp_path
+    temp_path = os.tmpnam()
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
     except socekt.error as msg:
@@ -165,7 +160,7 @@ class Accept_RTSP(threading.Thread):
 
 def server(port_rtsp,port_playlist):
     """ This function waits for RTSP/Playlist request and starts new thread. """
-    playlist.initSongs()    
+    #playlist.initSongs()    
     inputs = []
     rtspsocket = listen(port_rtsp)
     if rtspsocket is None:
