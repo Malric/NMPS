@@ -140,23 +140,27 @@ class Accept_RTSP(threading.Thread):
                 break
             else:
                 if p.rtspCommand == "SETUP":
-                    unixsocket = startANDconnect('jayate.wav')#For now
-                    print unixsocket                    
+                    unixsocket = startANDconnect(p.pathname)            
                     if unixsocket is None:
                         self.conn.close()
                         break    
                 if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
                     try:
                         r1,r2 = p.clientport.split('-')
-                        unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],r1,r2))#change rtp and rtcp to variable
+                        unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],r1,r2))
                     except socket.error as msg:
                         print 'IPC: ',msg
-                print p.rtspCommand
+                    if p.rtspCommand == "SETUP":
+                        reply = unixsocket.recv(1024)
+                        u.parse(reply)
                 try:
-                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,"9000-90001","23544","4566","0"))
+                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,"23544","4566","0"))
                 except socket.error as msg:
                     print 'RTSP thread ',msg
                 p.dumpMessage()
+            if p.rtspCommand == "TEARDOWN":
+                self.conn.close()
+                break 
       
 
 def server(port_rtsp,port_playlist):
