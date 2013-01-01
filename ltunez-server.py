@@ -145,8 +145,7 @@ class Accept_RTSP(threading.Thread):
                         break    
                 if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
                     try:
-                        """ Controlling the streamers is basically done as converting RTSP requests to SCP requests.
-                            SCP protocol is strict subset of RTSP protocol."""
+                        """ Controlling the streamers is basically done as converting RTSP requests to SCP requests."""
                         r1,r2 = p.clientport.split('-')
                         unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],r1,r2))
                     except socket.error as msg:

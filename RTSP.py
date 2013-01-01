@@ -26,6 +26,8 @@ class RTSPMessage():
         self.transport   = ""
         self.range       = ""
         self.clientport  = ""
+        self.sequence    = "12345"
+        self.rtptime     = "54321"
         
         if message is not None:
             self.rtspMsg = message
@@ -164,7 +166,7 @@ class RTSPMessage():
     ##
     # Setup Reply Message
     ##
-    def createSetupReplyMessage(self, cseq, transport, clientport, serverport,session):
+    def createSetupReplyMessage(self, cseq, transport, clientport, serverport, session):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Transport: "+transport
         self.rtspMsg += "client_port="+clientport+";"
@@ -176,7 +178,7 @@ class RTSPMessage():
     ##
     # Play reply message
     ##
-    def createPlayReplyMessage(self, cseq,URI,session, seq, rtptime):
+    def createPlayReplyMessage(self, cseq, URI, session, seq, rtptime):
         self.createReplyHeader(cseq)
         self.rtspMsg += "Session: "+session+"\r\n"
         self.rtspMsg += "RTP-Info: "
