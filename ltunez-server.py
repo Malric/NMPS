@@ -112,6 +112,8 @@ class Accept_RTSP(threading.Thread):
         data = ''
         unixsocket = None
         p = RTSP.RTSPMessage(None)
+        
+        # RTSP Commands:
         funcPointer = dict()
         funcPointer["OPTIONS"] = p.createOptionsReplyMessage
         funcPointer["DESCRIBE"] = p.createDescriptionReplyMessage
@@ -119,7 +121,9 @@ class Accept_RTSP(threading.Thread):
         funcPointer["TEARDOWN"] = p.createTeardownReplyMessage
         funcPointer["PLAY"] = p.createPlayReplyMessage
         funcPointer["PAUSE"] = p.createPauseReplyMessage
-        s = sdp.SDPMessage("Test","23544",0)
+        s = sdp.SDPMessage("LTunez",random.randint(0,1000))
+
+        # SCP Commands:
         u = scp.SCPMessage()
         ffuncPointer = dict()
         ffuncPointer["SETUP"] = u.createSetup
@@ -141,15 +145,20 @@ class Accept_RTSP(threading.Thread):
                         break    
                 if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
                     try:
+                        """ Controlling the streamers is basically done as converting RTSP requests to SCP requests.
+                            SCP protocol is strict subset of RTSP protocol."""
                         r1,r2 = p.clientport.split('-')
                         unixsocket.send(ffuncPointer[p.rtspCommand](self.addr[0],r1,r2))
                     except socket.error as msg:
                         print 'IPC: ',msg
-                    if p.rtspCommand == "SETUP":
+                    if p.rtspCommand == "SETUP" or "PLAY":
                         reply = unixsocket.recv(1024)
                         u.parse(reply)
+                        if p.rtspCommand == "SETUP":
+                            s.setPort(u.clientport)
                 try:
-                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,"23544","4566","0"))
+                    """ Sending RTSP replies to clients"""
+                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,p.session, u.sequence, u.rtptime))
                 except socket.error as msg:
                     print 'RTSP thread ',msg
                 p.dumpMessage()

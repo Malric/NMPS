@@ -102,6 +102,7 @@ def main():
                     clients.pop(addr)
                 elif m.command == "PLAY":
                     clients[addr].STREAM = True
+                    unix_socket.sendto(m.createRunning(None, str(c.sequence), str(c.timestamp)),addr)
                 elif m.command == "PAUSE":
                     clients[addr].STREAM = False	                
             if option is rtcp_socket:
