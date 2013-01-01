@@ -78,8 +78,9 @@ class SCPMessage:
         self.sequence = sequence
         self.rtptime  = rtptime
         self.message = self.command + " "+self.protocol+terminator
-        self.message += "sequence: "+self.clientRtpPort+terminator
-        self.message += "rtptime: "+self.clientRtcpPort+terminator+terminator
+        self.message += "sequence: "+self.sequence+terminator
+        self.message += "rtptime: "+self.rtptime+terminator+terminator
+        return self.message
 
     def parse(self,message):
         self.message = message
