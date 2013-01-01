@@ -25,7 +25,8 @@ class Client():
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
-    HOST = '127.0.0.1'    # Local host
+    #HOST = '127.0.0.1'    # Local host
+    HOST = socket.gethostbyname(socket.gethostname())
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res
@@ -108,16 +109,17 @@ def main():
                 pass                 
                 #print data # For now,lets see how it goes
         vs = clients.values()
+        rtpPacketSendRate = 1
         for v in vs:
             if v.STREAM and v.index < songsize:
                 buff = rtpheader.createMessage(v.sequence,v.timestamp,0)
                 packet = buffer(buff)
-                packet = packet + song[v.index:v.index+8000]
+                packet = packet + song[v.index:v.index+8000*rtpPacketSendRate]
                 rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
-                v.index = v.index + 8000
-                v.sequence = v.sequence + 1
-                v.timestamp = v.timestamp + 8000  
-        time.sleep(1)      
+                v.index = v.index + 8000*rtpPacketSendRate
+                v.sequence = v.sequence + 1*rtpPacketSendRate
+                v.timestamp = v.timestamp + 8000*rtpPacketSendRate  
+        time.sleep(rtpPacketSendRate)      
         if ONCE and len(clients) == 0:
             break
     unix_socket.close()
