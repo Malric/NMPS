@@ -13,14 +13,14 @@ class SDPMessage:
         self.v = "0"
         self.s = subject
         self.o = "Ltunez "+session+" "+NTP.timestamp()+" IN IP4 "\
-				 +socket.gethostbyname(socket.gethostname())
+				 +str(socket.gethostbyname(socket.gethostname()))
         self.m = "audio 0 RTP/AVP 0" #u-law PCM! <-- Fix me for A-law # removed /2
         self.a = "sendonly"
        
 	
     def setPort(self, port):
         self.m = "audio "+port+"/2 RTP/AVP 0"
-        
+
     def getMessage(self):
         #print self.sdpMsg
         self.sdpMsg = "v="+self.v+"\r\n"
