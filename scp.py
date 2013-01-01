@@ -113,7 +113,7 @@ class SCPMessage:
             hits = self.sequenceRegex.search(line)
             if hits is not None:
                 self.sequence = hits.group(1)
-            hits = self.rtptime.search(line)
+            hits = self.rtptimeRegex.search(line)
             if hits is not None:
                 self.rtptime = hits.group(1)
                
