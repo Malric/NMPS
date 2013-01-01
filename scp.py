@@ -28,7 +28,7 @@ class SCPMessage:
         self.sequenceRegex = re.compile(r'sequence: (.*)$', re.IGNORECASE)
         self.rtptimeRegex = re.compile(r'rtptime: (.*)$', re.IGNORECASE)
 
-    def createPlay(self, ip):
+    def createPlay(self, ip,UNWANTED3,UNWANTED4):
         """ Control message to start streaming. """
         self.command = "PLAY"
         self.clientIp = ip
@@ -36,7 +36,7 @@ class SCPMessage:
         self.message += "ip: "+self.clientIp+terminator+terminator
         return self.message
 
-    def createPause(self, ip):
+    def createPause(self, ip,UNWANTED3,UNWANTED4):
         """ Control message to pause streaming. """
         self.command = "PAUSE"
         self.clientIp = ip
@@ -44,7 +44,7 @@ class SCPMessage:
         self.message += "ip: "+self.clientIp+terminator+terminator
         return self.message
 
-    def createTeardown(self, ip):
+    def createTeardown(self, ip,UNWANTED3,UNWANTED4):
         """ Control message to teardown connection to certain client. """
         self.command = "TEARDOWN"
         self.clientIp = ip
@@ -64,7 +64,7 @@ class SCPMessage:
         self.message += "rtcp: "+self.clientRtcpPort+terminator+terminator
         return self.message
 
-    def createPort(self, rtpPort, rtcpPort):
+    def createPort(self, UNWANTED2,rtpPort, rtcpPort):
         self.command = "PORTS"
         self.clientRtpPort = rtpPort
         self.clientRtcpPort = rtcpPort

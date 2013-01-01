@@ -16,6 +16,7 @@ import playlist
 import time
 import scp
 import tempfile
+import random
 
 def listen(PORT):
     """ Create listening socket """
@@ -121,7 +122,8 @@ class Accept_RTSP(threading.Thread):
         funcPointer["TEARDOWN"] = p.createTeardownReplyMessage
         funcPointer["PLAY"] = p.createPlayReplyMessage
         funcPointer["PAUSE"] = p.createPauseReplyMessage
-        s = sdp.SDPMessage("LTunez",random.randint(0,1000))
+        session = random.randint(0,1000)
+        s = sdp.SDPMessage("LTunez", session)
 
         # SCP Commands:
         u = scp.SCPMessage()
@@ -154,10 +156,10 @@ class Accept_RTSP(threading.Thread):
                         reply = unixsocket.recv(1024)
                         u.parse(reply)
                         if p.rtspCommand == "SETUP":
-                            s.setPort(u.clientport)
+                            s.setPort(u.clientRtpPort)
                 try:
                     """ Sending RTSP replies to clients"""
-                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,p.session, u.sequence, u.rtptime))
+                    self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,str(session), u.sequence, u.rtptime))
                 except socket.error as msg:
                     print 'RTSP thread ',msg
                 p.dumpMessage()
