@@ -22,6 +22,7 @@ class Client():
     index = 0 # song byte index
     sequence = random.randint(1,10000)
     timestamp = random.randint(1,10000)
+    ssrc = random.randint(1,10000)
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -113,7 +114,7 @@ def main():
         rtpPacketSendRate = 1
         for v in vs:
             if v.STREAM and v.index < songsize:
-                buff = rtpheader.createMessage(v.sequence,v.timestamp,0)
+                buff = rtpheader.createMessage(v.sequence,v.timestamp,str(c.ssrc))
                 packet = buffer(buff)
                 packet = packet + song[v.index:v.index+8000*rtpPacketSendRate]
                 rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
