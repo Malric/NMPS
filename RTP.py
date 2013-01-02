@@ -64,6 +64,18 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.header.Timestamp = self.timestamp
         self.header.SSRC = self.ssrc
 
+    def updateFields(self):
+        self.version = self.header.Version
+        self.padding = self.header.Padding
+        self.extension = self.header.Extension
+        self.csrc_count = self.header.CSRC_Count
+        self.marker = self.header.Marker
+        self.payload = self.header.Payload
+        self.sequence = self.header.Sequence
+        self.timestamp = self.header.Timestamp
+        self.ssrc = self.header.SSRC
+        self.csrc = self.header.CSRC
+
     ##
     #   Message creation, returns the packet
     ##
@@ -101,14 +113,14 @@ class RTPMessage(ctypes.BigEndianStructure):
             return 0
 
     def printFields(self):
-        string  ="Version: "+str(self.header.Version) + "\r\n"
-        string +="Padding: "+str(self.header.Padding) + "\r\n"
+        string  ="Version: "+str(self.version) + "\r\n"
+        string +="Padding: "+str(self.padding) + "\r\n"
         string +="Extension: "+str(self.extension) + "\r\n"
         string +="CRSC_Count: "+str(self.csrc_count) + "\r\n"
         string +="Marker: "+str(self.marker) + "\r\n"
         string +="Payload: "+str(self.payload) + "\r\n"
-        string +="Sequence: "+str(self.header.Sequence) + "\r\n"
-        string +="Timestamp: "+str(self.header.Timestamp) + "\r\n"
+        string +="Sequence: "+str(self.sequence) + "\r\n"
+        string +="Timestamp: "+str(self.timestamp) + "\r\n"
         string +="SSRC: "+str(self.ssrc) + "\r\n"
         string +="CSRC: "+str(self.csrc) + "\r\n"
         print string

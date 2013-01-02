@@ -41,8 +41,9 @@ def rtp_receive(port_rtp):
             print "Looptaan"
             data, addr = s.recvfrom_into(rtpheader,1024)
             print "Received data from " + str(addr[0]) + ":" + str(addr[1]) + ":"
+            rtpheader.updateFields()
             rtpheader.printFields()
-            Once = False
+            #Once = False
         except KeyboardInterrupt:
             break
     s.close()
