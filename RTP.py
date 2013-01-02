@@ -125,7 +125,18 @@ class RTPMessage(ctypes.BigEndianStructure):
         string +="CSRC: "+str(self.csrc) + "\r\n"
         print string
 
-    
+    def printHeader(self):
+        string  ="Version: "+str(self.header.Version) + "\r\n"
+        string +="Padding: "+str(self.header.Padding) + "\r\n"
+        string +="Extension: "+str(self.header.Extension) + "\r\n"
+        string +="CRSC_Count: "+str(self.header.CSRC_Count) + "\r\n"
+        string +="Marker: "+str(self.header.Marker) + "\r\n"
+        string +="Payload: "+str(self.header.Payload) + "\r\n"
+        string +="Sequence: "+str(self.header.Sequence) + "\r\n"
+        string +="Timestamp: "+str(self.header.Timestamp) + "\r\n"
+        string +="SSRC: "+str(self.header.SSRC) + "\r\n"
+        string +="CSRC: "+str(self.header.CSRC) + "\r\n"
+        print string
 #TODO
 # Create message creation (timestamp, ssrc, csrc, sequence)
 # Check extension bit

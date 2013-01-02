@@ -37,9 +37,10 @@ def rtp_send(port_rtp, port_rrtp):
     receiver_ip = socket.gethostbyname(socket.gethostname())
     
     rtpheader = RTP.RTPMessage(24567)
-    sent = s.sendto(rtpheader.createMessage(123456,654321,0), (receiver_ip, port_rrtp))
+    sent = s.sendto(rtpheader.createMessage(12345,654321,0), (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
     rtpheader.printFields()
+    rtpheader.printHeader()
     s.close()
 
 
