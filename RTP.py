@@ -6,6 +6,7 @@
 
 import ctypes
 import time
+import sys
 
 c_uint8 = ctypes.c_uint8
 c_uint16 = ctypes.c_uint16
@@ -87,30 +88,29 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.printFields()
         return self.header
 
-
-    def parse(self, msg):
-        print "Received RTP"
-
-        if msg == 0:
-            print "Faulty message"
-            return 0
-        msg.readinto(self.header)
-        
-        #print "Read " + nbytes + " into header"
-        self.version = self.header.Version
-        self.padding = self.header.Padding
-        self.extension = self.header.Extension
-        self.csrc_count = self.header.CSRC_Count
-        self.marker = self.header.Marker
-        self.sequence = self.header.Sequence
-        self.timestamp = self.header.Timestamp
-        self.ssrc = self.header.SSRC
-        self.csrc = self.header.CSRC
-        self.payload = msg[len(self.header):]
+    ##
+    # Sanity-checker
+    ##
+    def parse(self):
 
         if self.version != 2:
             print "Faulty packet: wrong version"
             return 0
+        if self.payload != 0:
+            print "Wrong payload type, Only accepts PCM-U"
+            return 0
+        if self.extension != 0:
+            print "We don't support any extension headers."
+            return 0
+
+    ##
+    # Start of payload
+    ##
+    def getOffset(self):
+        if self.csrc_count == 0:
+            return sys.getsizeof(self.header)
+        else:
+            return sys.getsizeof(self.header) + self.csrc_count*sys.getsizeof(c_uint32)
 
     def printFields(self):
         string  ="Version: "+str(self.version) + "\r\n"

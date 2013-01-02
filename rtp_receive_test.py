@@ -44,6 +44,7 @@ def rtp_receive(port_rtp):
             rtpheader.updateFields()
             rtpheader.printFields()
             rtpheader.printHeader()
+            print rtpheader.getOffset()
             #Once = False
         except KeyboardInterrupt:
             break
