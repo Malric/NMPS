@@ -7,6 +7,7 @@ import scp
 import wave
 import ctypes
 
+
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
     HOST = socket.gethostbyname(socket.gethostname())
@@ -34,7 +35,7 @@ def rtp_send(port_rtp, port_rrtp):
     print "RTP Sender running\r\n"
     s = bind(port_rtp)
     receiver_ip = socket.gethostbyname(socket.gethostname())
-
+    
     rtpheader = RTP.RTPMessage(24567)
     sent = s.sendto(rtpheader.createMessage(123456,654321,0), (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))

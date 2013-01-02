@@ -83,6 +83,8 @@ class RTPMessage(ctypes.BigEndianStructure):
             print "Faulty message"
             return 0
         msg.readinto(self.header)
+        
+        #print "Read " + nbytes + " into header"
         self.version = self.header.Version
         self.padding = self.header.Padding
         self.extension = self.header.Extension
@@ -99,16 +101,18 @@ class RTPMessage(ctypes.BigEndianStructure):
             return 0
 
     def printFields(self):
-        string  ="Version: "+str(self.version) + "\r\n"
-        string +="Padding: "+str(self.padding) + "\r\n"
+        string  ="Version: "+str(self.header.Version) + "\r\n"
+        string +="Padding: "+str(self.header.Padding) + "\r\n"
         string +="Extension: "+str(self.extension) + "\r\n"
         string +="CRSC_Count: "+str(self.csrc_count) + "\r\n"
         string +="Marker: "+str(self.marker) + "\r\n"
         string +="Payload: "+str(self.payload) + "\r\n"
-        string +="Timestamp: "+str(self.timestamp) + "\r\n"
+        string +="Sequence: "+str(self.header.Sequence) + "\r\n"
+        string +="Timestamp: "+str(self.header.Timestamp) + "\r\n"
         string +="SSRC: "+str(self.ssrc) + "\r\n"
         string +="CSRC: "+str(self.csrc) + "\r\n"
         print string
+
     
 #TODO
 # Create message creation (timestamp, ssrc, csrc, sequence)

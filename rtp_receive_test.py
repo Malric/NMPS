@@ -6,6 +6,7 @@ import scp
 import wave
 import ctypes
 
+
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
     HOST = socket.gethostbyname(socket.gethostname())
