@@ -154,24 +154,31 @@ class Accept_SIP(threading.Thread):
                     self.conn.close()
                 else:
                     if s.SIPCommand == "INVITE":
-                    sdp_inst = SDP_sip.SDPMessage("MBox", "Talk" ,"123456", self.addr, 8000)
-                    reply = s.createInviteReplyMessage(sdp_inst.SDPMsg, self.addr, server_ip)
-                    print "Sending invite reply:"
-                    print reply
-                    self.conn.sendall(reply)
-                elif s.SIPCommand == "OPTIONS":
-                    sdp_inst = SDP_sip.SDPMessage("MBox", "Talk" ,"123456", self.addr, 8000)
-                    reply = s.createOptionsReplyMessage(sdp_inst.SDPMsg, self.addr, server_ip)
-                    print "Sending options reply:"
-                    print reply
-                    self.conn.sendall(reply)
-                elif s.SIPCommand == "BYE":
-                    reply = s.createByeReplyMessage(server_ip)
-                    print "Sending bye reply:"
-                    print reply
-                    self.conn.sendall(reply)
-                    self.conn.close()
-                    break
+                        unixsocket = startANDconnectStreamer(p.pathname)            
+                            if unixsocket is None:
+                            self.conn.close()
+                            break
+                        #unixsocket.send(
+                        #unitsocket.recv port info...
+                        sdp_inst = SDP_sip.SDPMessage("MBox", "Talk" ,"123456", self.addr, 8000)
+                        reply = s.createInviteReplyMessage(sdp_inst.SDPMsg, self.addr, server_ip)
+                        print "Sending invite reply:"
+                        print reply
+                        self.conn.sendall(reply)
+                    elif s.SIPCommand == "OPTIONS":
+                        sdp_inst = SDP_sip.SDPMessage("MBox", "Talk" ,"123456", self.addr, 8000)
+                        reply = s.createOptionsReplyMessage(sdp_inst.SDPMsg, self.addr, server_ip)
+                        print "Sending options reply:"
+                        print reply
+                        self.conn.sendall(reply)
+                    elif s.SIPCommand == "BYE":
+                        #unitsocket.send(TEARDOWN)
+                        reply = s.createByeReplyMessage(server_ip)
+                        print "Sending bye reply:"
+                        print reply
+                        self.conn.sendall(reply)
+                        self.conn.close()
+                        break
 
 class Accept_RTSP(threading.Thread):
     """ Thread class. Each thread handles RTSP message request/reply for specific connection. """
