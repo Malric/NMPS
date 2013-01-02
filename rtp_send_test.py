@@ -42,9 +42,8 @@ def rtp_send(port_rtp, port_rrtp):
     songsize = wavef.getnframes()
     sent = s.sendto(rtpheader.createMessage(12345,654321,0), (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
-    print song[0:8000]
     packet = buffer(rtpheader.createMessage(12345,654321,0))
-    packet = packet+song[0:8000]
+    packet = packet+song[0:1400]
     sent = s.sendto(packet, (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
     rtpheader.printFields()

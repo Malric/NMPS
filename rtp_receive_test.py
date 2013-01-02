@@ -48,7 +48,7 @@ def rtp_receive(port_rtp):
                 data2,addr = s.recvfrom(offset)
             rtpmessage.printFields()
             rtpmessage.printHeader()
-            data, addr = s.recvfrom(8012)
+            data, addr = s.recvfrom(1500)
             print "Received data from " + str(addr[0]) + ":" + str(addr[1]) + ":"
             print len(data)
             print
