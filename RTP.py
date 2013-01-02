@@ -60,7 +60,7 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.header.Padding = self.padding
         self.header.CSRC_Count = self.csrc_count
         self.header.Marker = self.marker
-        self.header.Sequence = self. sequence
+        self.header.Sequence = self.sequence
         self.header.Timestamp = self.timestamp
         self.header.SSRC = self.ssrc
 
@@ -72,13 +72,14 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.timestamp = timestamp
         self.payload = payload
         self.updateHeader()
+        self.printFields()
         return self.header
 
 
     def parse(self, msg):
         print "Received RTP"
 
-        if bytestring == 0:
+        if msg == 0:
             print "Faulty message"
             return 0
         msg.readinto(self.header)
@@ -97,9 +98,17 @@ class RTPMessage(ctypes.BigEndianStructure):
             print "Faulty packet: wrong version"
             return 0
 
-        
-        
-        
+    def printFields(self):
+        string  ="Version: "+str(self.version) + "\r\n"
+        string +="Padding: "+str(self.padding) + "\r\n"
+        string +="Extension: "+str(self.extension) + "\r\n"
+        string +="CRSC_Count: "+str(self.csrc_count) + "\r\n"
+        string +="Marker: "+str(self.marker) + "\r\n"
+        string +="Payload: "+str(self.payload) + "\r\n"
+        string +="Timestamp: "+str(self.timestamp) + "\r\n"
+        string +="SSRC: "+str(self.ssrc) + "\r\n"
+        string +="CSRC: "+str(self.csrc) + "\r\n"
+        print string
     
 #TODO
 # Create message creation (timestamp, ssrc, csrc, sequence)

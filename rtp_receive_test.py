@@ -1,6 +1,10 @@
 import argparse
 import socket
-
+import RTP
+import os
+import scp
+import wave
+import ctypes
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -29,11 +33,15 @@ def rtp_receive(port_rtp):
     print "RTP Receiver running\r\n"
     s = bind(port_rtp)
 
-    while 1:
+    rtpheader = RTP.RTPMessage(24567)
+    Once = True
+    while Once:
         try:
-            data, addr = s.recvfrom(1024)
+            print "Looptaan"
+            data, addr = s.recvfrom_into(rtpheader,1024)
             print "Received data from " + str(addr[0]) + ":" + str(addr[1]) + ":"
-            print data
+            rtpheader.printFields()
+            Once = False
         except KeyboardInterrupt:
             break
     s.close()

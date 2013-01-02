@@ -1,7 +1,11 @@
 import argparse
 import socket
 import sys
-
+import RTP
+import os
+import scp
+import wave
+import ctypes
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -31,9 +35,10 @@ def rtp_send(port_rtp, port_rrtp):
     s = bind(port_rtp)
     receiver_ip = socket.gethostbyname(socket.gethostname())
 
-    sent = s.sendto("Test", (receiver_ip, port_rrtp))
+    rtpheader = RTP.RTPMessage(24567)
+    sent = s.sendto(rtpheader.createMessage(123456,654321,0), (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
-    
+    rtpheader.printFields()
     s.close()
 
 
