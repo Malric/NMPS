@@ -48,7 +48,7 @@ def listen(PORT):
         break
     return s
 
-def startANDconnect(path):
+def startANDconnectStreamer(path):
     if not os.path.exists('Sockets/'+path):
         pid = os.fork()
         if pid < 0:
@@ -76,6 +76,36 @@ def startANDconnect(path):
         print 'RTSP thread unix socket connect',msg
         return None
     return unixsocket
+
+    def startANDconnectReciever(path):
+    if not os.path.exists('Sockets/'+path):
+        pid = os.fork()
+        if pid < 0:
+            return None
+        elif pid == 0:
+           # os.execlp('python','python','reciever.py',path)
+    print 'Forked'
+    time.sleep(5)
+    pathtosocket = 'Sockets/'+path
+    print 'server',path
+    temp_path = os.tmpnam()
+    try:
+        unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
+    except socket.error as msg:
+        print 'SIP thread unix socket creation',msg
+        return None
+    try: 
+        unixsocket.bind(temp_path)
+    except socket.error as msg:
+        print 'SIP thread unix socket bind',msg
+        return None
+    try:
+        unixsocket.connect(pathtosocket)
+    except socket.error as msg:
+        print 'SIP thread unix socket connect',msg
+        return None
+    return unixsocket
+
                  
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
@@ -159,7 +189,7 @@ class Accept_RTSP(threading.Thread):
                 break
             else:
                 if p.rtspCommand == "SETUP":
-                    unixsocket = startANDconnect(p.pathname)            
+                    unixsocket = startANDconnectStreamer(p.pathname)            
                     if unixsocket is None:
                         self.conn.close()
                         break    
