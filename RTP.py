@@ -27,10 +27,12 @@ class rtp_header(ctypes.BigEndianStructure):
         ("Sequence", c_uint16, 16),
         ("Timestamp", c_uint32, 32),
         ("SSRC", c_uint32, 32),
-        ("CSRC", c_uint32, 32),
+        #("CSRC", c_uint32, 32),
         ]
 
-
+class rtp_CSRC(ctypes.BigEndianStructure):
+    _fields_ =[
+        ("CSRC", c_uint32,32)]
 class RTPMessage(ctypes.BigEndianStructure):
     
     ##
@@ -47,7 +49,7 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.sequence = 0
         self.timestamp = 0
         self.ssrc = ssrc
-        self.csrc = 0
+        #self.csrc = 0
         
         # Setting up header
         self.updateHeader()
@@ -75,7 +77,7 @@ class RTPMessage(ctypes.BigEndianStructure):
         self.sequence = self.header.Sequence
         self.timestamp = self.header.Timestamp
         self.ssrc = self.header.SSRC
-        self.csrc = self.header.CSRC
+        #self.csrc = self.header.CSRC
 
     ##
     #   Message creation, returns the packet
@@ -108,9 +110,9 @@ class RTPMessage(ctypes.BigEndianStructure):
     ##
     def getOffset(self):
         if self.csrc_count == 0:
-            return sys.getsizeof(self.header)
+            return 0
         else:
-            return sys.getsizeof(self.header) + self.csrc_count*sys.getsizeof(c_uint32)
+            return self.csrc_count*4
 
     def printFields(self):
         string  ="Version: "+str(self.version) + "\r\n"
@@ -122,7 +124,7 @@ class RTPMessage(ctypes.BigEndianStructure):
         string +="Sequence: "+str(self.sequence) + "\r\n"
         string +="Timestamp: "+str(self.timestamp) + "\r\n"
         string +="SSRC: "+str(self.ssrc) + "\r\n"
-        string +="CSRC: "+str(self.csrc) + "\r\n"
+        #string +="CSRC: "+str(self.csrc) + "\r\n"
         print string
 
     def printHeader(self):
@@ -135,7 +137,7 @@ class RTPMessage(ctypes.BigEndianStructure):
         string +="Sequence: "+str(self.header.Sequence) + "\r\n"
         string +="Timestamp: "+str(self.header.Timestamp) + "\r\n"
         string +="SSRC: "+str(self.header.SSRC) + "\r\n"
-        string +="CSRC: "+str(self.header.CSRC) + "\r\n"
+        #string +="CSRC: "+str(self.header.CSRC) + "\r\n"
         print string
 #TODO
 # Create message creation (timestamp, ssrc, csrc, sequence)

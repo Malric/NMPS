@@ -3,7 +3,7 @@ import socket
 import RTP
 import os
 import scp
-import wave
+import wav
 import ctypes
 
 
@@ -34,17 +34,25 @@ def rtp_receive(port_rtp):
     print "RTP Receiver running\r\n"
     s = bind(port_rtp)
 
-    rtpheader = RTP.RTPMessage(24567)
+    rtpmessage = RTP.RTPMessage(24567)
     Once = True
     while Once:
         try:
             print "Looptaan"
-            data, addr = s.recvfrom_into(rtpheader.header,1024)
+            data, addr = s.recvfrom_into(rtpmessage.header,12)
             print "Received data from " + str(addr[0]) + ":" + str(addr[1]) + ":"
-            rtpheader.updateFields()
-            rtpheader.printFields()
-            rtpheader.printHeader()
-            print rtpheader.getOffset()
+            rtpmessage.updateFields()
+            offset = rtpmessage.getOffset()
+            print "Offset: "+str(offset)
+            if offset != 0:
+                data2,addr = s.recvfrom(offset)
+            rtpmessage.printFields()
+            rtpmessage.printHeader()
+            data, addr = s.recvfrom(8012)
+            print "Received data from " + str(addr[0]) + ":" + str(addr[1]) + ":"
+            print len(data)
+            print
+            print data
             #Once = False
         except KeyboardInterrupt:
             break

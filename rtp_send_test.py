@@ -4,7 +4,7 @@ import sys
 import RTP
 import os
 import scp
-import wave
+import wav
 import ctypes
 
 
@@ -37,7 +37,15 @@ def rtp_send(port_rtp, port_rrtp):
     receiver_ip = socket.gethostbyname(socket.gethostname())
     
     rtpheader = RTP.RTPMessage(24567)
+    wavef = wav.Wave('Wavs/Mikko#1.wav')
+    song = wavef.getdata()
+    songsize = wavef.getnframes()
     sent = s.sendto(rtpheader.createMessage(12345,654321,0), (receiver_ip, port_rrtp))
+    print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
+    print song[0:8000]
+    packet = buffer(rtpheader.createMessage(12345,654321,0))
+    packet = packet+song[0:8000]
+    sent = s.sendto(packet, (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
     rtpheader.printFields()
     rtpheader.printHeader()
