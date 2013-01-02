@@ -1,6 +1,7 @@
 import argparse
 import socket
 import sys
+import RTP
 
 
 def bind(PORT):
@@ -30,8 +31,11 @@ def rtp_send(port_rtp, port_rrtp):
     print "RTP Sender running\r\n"
     s = bind(port_rtp)
     receiver_ip = socket.gethostbyname(socket.gethostname())
+    
+    rtp_header = RTP.RTPMessage(45236)
+    rtp_packet = rtp_header.createMessage(0, 0, 0)
 
-    sent = s.sendto("Test", (receiver_ip, port_rrtp))
+    sent = s.sendto(rtp_packet, (receiver_ip, port_rrtp))
     print >>sys.stderr, "Sent %s bytes to %s" % (sent, (receiver_ip, port_rrtp))
     
     s.close()

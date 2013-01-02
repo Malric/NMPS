@@ -76,12 +76,15 @@ class RTPMessage(ctypes.BigEndianStructure):
 
 
     def parse(self, msg):
-        print "Received RTP"
-
+        print "Parsing RTP..."
+        '''
         if bytestring == 0:
             print "Faulty message"
             return 0
+        '''
         msg.readinto(self.header)
+        
+        #print "Read " + nbytes + " into header"
         self.version = self.header.Version
         self.padding = self.header.Padding
         self.extension = self.header.Extension
@@ -95,10 +98,8 @@ class RTPMessage(ctypes.BigEndianStructure):
 
         if self.version != 2:
             print "Faulty packet: wrong version"
-            return 0
-
-        
-        
+            return False
+        return True
         
     
 #TODO

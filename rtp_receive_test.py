@@ -1,5 +1,6 @@
 import argparse
 import socket
+import RTP
 
 
 def bind(PORT):
@@ -34,6 +35,10 @@ def rtp_receive(port_rtp):
             data, addr = s.recvfrom(1024)
             print "Received data from " + str(addr[0]) + ":" + str(addr[1]) + ":"
             print data
+            
+            rtp_header = RTP.RTPMessage(45236)
+            if rtp_header.parse(data) == True:
+                print "Parsing succeeded" 
         except KeyboardInterrupt:
             break
     s.close()
