@@ -5,6 +5,7 @@ import re
 import sys
 import os
 
+
 def connect(host,port):
     """ Connect to server and return socket. """
     sock = None
@@ -34,6 +35,7 @@ class Playlist:
         self.winPL = winPL         
         self.playlist = dict()
         self.winNPL = winNPL
+        self.vlc = 0
  
     def parse(self,data):
         """ Parse m3u playlist. """
@@ -76,11 +78,14 @@ class Playlist:
 
     def play(self):
         #print self.playlist[self.cursor]
+        if self.vlc != 0:
+            os.system('kill -2 '+str(self.vlc))
         pid = os.fork()
         if pid == 0:
-            os.system("vlc -vvv --quiet " + self.playlist[self.cursor][3])
-            sys.exit()
-        
+            os.execlp("vlc","vlc","--quiet", self.playlist[self.cursor][3])
+        else:
+            self.vlc = pid
+
     def draw(self):
         self.winH.border()
         self.winH.addstr(1, 35, "***** LTUNES CLIENT *****",curses.A_DIM)
@@ -178,6 +183,8 @@ def main(host,port):
             curses.doupdate()
         if quit:
             break
+    if playlist.vlc != 0:
+            os.system('kill -2 '+str(playlist.vlc))
     curses.nocbreak()
     stdscr.keypad(0)
     curses.echo()
