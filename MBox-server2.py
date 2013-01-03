@@ -21,7 +21,7 @@ import SIP
 import SDP_sip
 
 def listen(PORT):
-    """ Create listening socket """
+    """ Create listening TCP socket """
     HOST = None     # Symbolic name meaning all available interfaces
     PORT = PORT     
     s = None
@@ -50,6 +50,13 @@ def listen(PORT):
         break
     return s
 
+def bind(PORT):
+    """ Create UDP socket and bind given port with it. """ 
+    HOST = ""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((HOST, PORT))
+    return s
+
 def startANDconnectStreamer(path):
     if not os.path.exists('Sockets/'+path):
         pid = os.fork()
@@ -64,7 +71,7 @@ def startANDconnectStreamer(path):
     temp_path = os.tmpnam()
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
-    except socekt.error as msg:
+    except socket.error as msg:
         print 'RTSP thread unix socket creation',msg
         return None
     try: 
@@ -79,7 +86,8 @@ def startANDconnectStreamer(path):
         return None
     return unixsocket
 
-    def startANDconnectReciever(path):
+'''
+def startANDconnectReciever(path):
     if not os.path.exists('Sockets/'+path):
         pid = os.fork()
         if pid < 0:
@@ -107,8 +115,8 @@ def startANDconnectStreamer(path):
         print 'SIP thread unix socket connect',msg
         return None
     return unixsocket
-
-                 
+'''
+'''   
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
     def __init__(self,conn,addr, port_rtsp):
@@ -131,54 +139,56 @@ class Accept_PL(threading.Thread):
         else:
             print "Playlist Server: Invalid request from client"
         self.conn.close()
+'''
 
 class Accept_SIP(threading.Thread):
-    """ Thread class. Each thread handles SIP message request/reply for specific connection. """
-    def __init__(self,conn,addr, port_sip):
+    """ Thread class. Thread handles SIP message request/reply. """
+    def __init__(self, sip_socket, buff, addr):
         """ Initialize with socket and address. """
         threading.Thread.__init__(self)
-        self.conn = conn
+        self.s = sip_socket
+        self.buff = buff
         self.addr = addr
 
     def run(self):
         """ Override base class run() function. """
-        data = ''
-        unixsocket = None
+        #unixsocket = None
         server_ip = socket.gethostbyname(socket.gethostname())
-        s = SIP.SIPMessage(None)
         while True:
-            try:
-                data = self.conn.recv(1024)
-                s.SIPMsg = data
-                if s.parse() is False:
-                    self.conn.close()
-                else:
-                    if s.SIPCommand == "INVITE":
-                        unixsocket = startANDconnectStreamer(p.pathname)            
-                            if unixsocket is None:
-                            self.conn.close()
-                            break
-                        #unixsocket.send(
-                        #unitsocket.recv port info...
-                        sdp_inst = SDP_sip.SDPMessage("MBox", "Talk" ,"123456", self.addr, 8000)
-                        reply = s.createInviteReplyMessage(sdp_inst.SDPMsg, self.addr, server_ip)
-                        print "Sending invite reply:"
-                        print reply
-                        self.conn.sendall(reply)
-                    elif s.SIPCommand == "OPTIONS":
-                        sdp_inst = SDP_sip.SDPMessage("MBox", "Talk" ,"123456", self.addr, 8000)
-                        reply = s.createOptionsReplyMessage(sdp_inst.SDPMsg, self.addr, server_ip)
-                        print "Sending options reply:"
-                        print reply
-                        self.conn.sendall(reply)
-                    elif s.SIPCommand == "BYE":
-                        #unitsocket.send(TEARDOWN)
-                        reply = s.createByeReplyMessage(server_ip)
-                        print "Sending bye reply:"
-                        print reply
-                        self.conn.sendall(reply)
-                        self.conn.close()
-                        break
+            sip_inst = SIP.SIPMessage(self.buff)
+            if sip_inst.parse() is True:
+                print sip_inst.SIPMsg
+                client_ip = sip_inst.client_ip
+                if sip_inst.SIPCommand == "INVITE":
+                    #unixsocket = startANDconnectStreamer(p.pathname)            
+                    #if unixsocket is None:
+                        #break
+                    #unixsocket.send(
+                    #unitsocket.recv port info...
+                    sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
+                    reply = sip_inst.createInviteReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
+                    print "Sending invite reply:"
+                    print reply
+                    sent = self.s.sendto(reply, self.addr)
+                    print >>sys.stderr, "Sent %s bytes to %s" % (sent, self.addr)
+                elif sip_inst.SIPCommand == "OPTIONS":
+                    sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
+                    reply = sip_inst.createOptionsReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
+                    print "Sending options reply:"
+                    print reply
+                    sent = self.s.sendto(reply, self.addr)
+                    print >>sys.stderr, "Sent %s bytes to %s" % (sent, self.addr)
+                elif sip_inst.SIPCommand == "BYE":
+                    #unitsocket.send(TEARDOWN)
+                    reply = sip_inst.createByeReplyMessage(server_ip)
+                    print "Sending bye reply:"
+                    print reply
+                    sent = self.s.sendto(reply, self.addr)
+                    print >>sys.stderr, "Sent %s bytes to %s" % (sent, self.addr)
+                    break
+            self.buff = ''
+            self.buff, self.addr = self.s.recvfrom(1024)
+            print 'Server: SIP message from ', self.addr, ':'
 
 class Accept_RTSP(threading.Thread):
     """ Thread class. Each thread handles RTSP message request/reply for specific connection. """
@@ -246,69 +256,77 @@ class Accept_RTSP(threading.Thread):
             if p.rtspCommand == "TEARDOWN":
                 self.conn.close()
                 break 
-      
 
-def server(port_rtsp,port_playlist, port_sip):
-    """ This function waits for RTSP/Playlist request and starts new thread. """
-    #playlist.initSongs()    
+def server(port_rtsp, port_playlist, port_sip):
+    """ This function waits for RTSP/Playlist/SIP request and starts new thread. """  
     inputs = []
-    rtspsocket = listen(port_rtsp)
-    if rtspsocket is None:
+    rtsp_socket = listen(port_rtsp) # TCP socket
+    if rtsp_socket is None:
         sys.exit(1)
-    playlistsocket = listen(port_playlist)
-    if playlistsocket is None:
-        rtspsocket.close()
+    print "RTSP socket listening"
+    playlist_socket = listen(port_playlist) # TCP socket
+    if playlist_socket is None:
+        rtsp_socket.close()
         sys.exit(1)
-    sipsocket = listen(port_sip)
-    if playlistsocket is None:
-        rtspsocket.close()
-        playlistsocket.close()
+    print "Playlist socket listening"
+    sip_socket = bind(port_sip) # UDP socket
+    if sip_socket is None:
+        rtsp_socket.close()
+        playlist_socket.close()
         sys.exit(1)
-    inputs.append(rtspsocket)
-    inputs.append(playlistsocket)
-    inputs.append(sipsocket)    
-    while True:    
+    print "SIP socket ready"
+    inputs.append(rtsp_socket)
+    inputs.append(playlist_socket)
+    inputs.append(sip_socket)
+    SIP_once = False # only one SIP thread for now   
+    while True:
         try:
-            inputready,outputready,exceptready = select.select(inputs,[],[])
+            inputready,outputready,exceptready = select.select(inputs, [], [])
         except KeyboardInterrupt:
             print 'Interrupted by user,exiting'
-            inputs.remove(rtspsocket)
-            inputs.remove(playlistsocket)
-            rtspsocket.close()
-            playlistsocket.close()
-            sipsocket.close()
+            inputs.remove(rtsp_socket)
+            inputs.remove(playlist_socket)
+            inputs.remove(sip_socket)
+            rtsp_socket.close()
+            playlist_socket.close()
+            sip_socket.close()
             #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
             break
         for option in inputready:
-            if option is rtspsocket:
+            if option is rtsp_socket:
                 try:            
-                    conn, addr = rtspsocket.accept()
+                    conn, addr = rtsp_socket.accept()
                 except socket.error as msg:
                     print 'Server: RTSP ',msg
                     continue
                 print 'Server: RTSP connection from ', addr
-                r = Accept_RTSP(conn,addr)
+                
+                r = Accept_RTSP(conn, addr)
                 r.start()
-            elif option is playlistsocket:
+                
+            elif option is playlist_socket:
                 try:
-                    conn,addr = playlistsocket.accept()
+                    conn,addr = playlist_socket.accept()
                 except socket.error as msg:
-                    print 'Server: Playlist ',msg
+                    print 'Server: Playlist ', msg
                     continue
                 print 'Server: Playlist request from ', addr
-                p = Accept_PL(conn,addr,port_rtsp)
+                '''
+                p = Accept_PL(conn, addr, port_rtsp)
                 p.start()
-            elif option is sipsocket:
+                '''
+            elif option is sip_socket and not SIP_once:
+                SIP_once = True
+                buff = ''
                 try:
-                    conn,addr = sipsocket.accept()
+                    buff, addr = sip_socket.recvfrom(1024)
                 except socket.error as msg:
-                    print 'Server: SIP ',msg
+                    print 'Server: SIP ', msg
                     continue
-                print 'Server: SIP request from ', addr
-                s = Accept_SIP(conn,addr, port_sip)
+                print 'Server: Starting SIP thread, SIP message from ', addr, ':'
+                s = Accept_SIP(sip_socket, buff, addr)
                 s.start()
-
-   
+                
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--playlist", help="playlist server port", type=int)
