@@ -84,6 +84,7 @@ class Accept_PL(threading.Thread):
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
+        self.port_rtsp = port_rtsp
 
     def run(self):
         """ Override base class run() function. """
@@ -92,7 +93,7 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
             print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(5, socket.gethostbyname(socket.gethostname()), port_rtsp)
+            pl = playlist.getPlaylist(3, socket.gethostbyname(socket.gethostname()), self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
             print "Playlist Server: Sending playlist"
             self.conn.sendall(reply)
@@ -170,7 +171,7 @@ class Accept_RTSP(threading.Thread):
 
 def server(port_rtsp,port_playlist):
     """ This function waits for RTSP/Playlist request and starts new thread. """
-    #playlist.initSongs()    
+    playlist.initSongs()    
     inputs = []
     rtspsocket = listen(port_rtsp)
     if rtspsocket is None:

@@ -115,12 +115,12 @@ def main():
             if v.STREAM and v.index < songsize:
                 buff = rtpheader.createMessage(v.sequence,v.timestamp,0)
                 packet = buffer(buff)
-                packet = packet + song[v.index:v.index+8000*rtpPacketSendRate]
+                packet = packet + song[v.index:v.index+1400*rtpPacketSendRate]
                 rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
-                v.index = v.index + 8000*rtpPacketSendRate
-                v.sequence = v.sequence + 1*rtpPacketSendRate
-                v.timestamp = v.timestamp + 8000*rtpPacketSendRate  
-        time.sleep(rtpPacketSendRate)      
+                v.index = v.index + 1400*rtpPacketSendRate
+                v.sequence = v.sequence + 1
+                v.timestamp = v.timestamp + 1400*rtpPacketSendRate  
+        time.sleep(0.175)      
         if ONCE and len(clients) == 0:
             break
     unix_socket.close()

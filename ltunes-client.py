@@ -75,9 +75,10 @@ class Playlist:
         self.draw()
 
     def play(self):
+        #print self.playlist[self.cursor]
         pid = os.fork()
         if pid == 0:
-            os.system("vlc --quiet")
+            os.system("vlc -vvv --quiet " + self.playlist[self.cursor][3])
             sys.exit()
         
     def draw(self):

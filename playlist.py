@@ -113,7 +113,7 @@ def getPlaylist(size, ip, port):
         i = songs[idx].path.rfind("/")
         wav_filename = songs[idx].path[i+1:]
         print "Playlist Server: Adding '" + wav_filename + "' to playlist"
-        playlist += "#EXTINF:" + songs[idx].length + ", " + songs[idx].artist + " - " + songs[idx].title + "\r\nrtsp://"+ip+":"+port+"/" + wav_filename + "\r\n"
+        playlist += "#EXTINF:" + str(songs[idx].length) + ", " + songs[idx].artist + " - " + songs[idx].title + "\r\nrtsp://"+ip+":"+str(port)+"/" + wav_filename + "\r\n"
         songs[idx].in_last_pl = True
         
     return playlist
