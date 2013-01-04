@@ -63,7 +63,7 @@ def startANDconnectStreamer(path):
         if pid < 0:
             return None
         elif pid == 0:
-            os.execlp('python','python','streamer.py',path)
+            os.execlp('python','python','streamer.py',path,"Records")
     print 'Forked'
     time.sleep(5)
     pathtosocket = 'Sockets/'+path
@@ -130,15 +130,15 @@ class Accept_PL(threading.Thread):
         """ Override base class run() function. """
         data = self.conn.recv(1024)
         if data is None:
-            print "Playlist Server: No data"
+            print "Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
-            print "Playlist Server: Creating playlist"
-            pl = playlist.getRecordList(3, socket.gethostbyname(socket.gethostname()), self.port_rtsp)
+            print "Server: Creating recordlist"
+            pl = playlist.getRecordList(socket.gethostbyname(socket.gethostname()), self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-            print "Playlist Server: Sending playlist"
+            print "Server: Sending recordlist"
             self.conn.sendall(reply)
         else:
-            print "Playlist Server: Invalid request from client"
+            print "Server: Invalid request from client"
         self.conn.close()
 
 
@@ -310,9 +310,9 @@ def server(port_rtsp, port_playlist, port_sip):
                 try:
                     conn,addr = playlist_socket.accept()
                 except socket.error as msg:
-                    print 'Server: Playlist ', msg
+                    print 'Server: Recordlist ', msg
                     continue
-                print 'Server: Playlist request from ', addr
+                print 'Server: Recordlist request from ', addr
                 p = Accept_PL(conn, addr, port_rtsp)
                 p.start()
                 
