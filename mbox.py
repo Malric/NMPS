@@ -19,14 +19,19 @@ import scp
 import tempfile
 import random
 import SIP
-import SDP_sip
+#import SDP_sip
+import sdp
 import ctypes
 import writer
+import helpers
+
+server_ip = ""
+RTP_PACKET_MAX_SIZE = 1400
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
-    HOST = '127.0.0.1'    # Local host
-    #HOST = socket.gethostbyname(socket.gethostname())
+    #HOST = '127.0.0.1'    # Local host
+    HOST = server_ip
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res
@@ -70,6 +75,7 @@ class Receiver(threading.Thread):
         rtpmessage = RTP.RTPMessage(24567)
         while True:
             if flows[self.addr].stop == True:
+                print "Printing file"
                 writer.wavwriter(self.load,len(self.load),'msg.wav')
                 flows.pop(self.addr)
                 inputs.remove(self.rtp_socket)
@@ -95,17 +101,19 @@ class Receiver(threading.Thread):
                         data2,addr = self.rtp_socket.recvfrom(offset)
                         #print data2
                     payload, addr = self.rtp_socket.recvfrom(RTP_PACKET_MAX_SIZE)
-                    print len(payload)
-                    self.load += payload                    
+                    print "Single packet: " +str(len(payload))
+                    self.load += payload
+                    print "Total load: " +str(len(self.len))            
                     # HANDLE PAYLOAD
          
 def server(sip_port):
     """ Sip server """
     print sip_port
-    sip_socket = bind(sip_port)  
+    sip_socket = bind(sip_port)
     inputs = []
     print 'Sip server started'
     inputs.append(sip_socket)
+    session = random.randint(1,10000)
     while True:
         try:
             inputready,outputready,exceptready = select.select(inputs, [], [])
@@ -122,7 +130,7 @@ def server(sip_port):
                     print 'Server: SIP ', msg
                     continue
                 print 'Server: SIP message from ', addr, ':'
-                server_ip = socket.gethostbyname(socket.gethostname())
+                #server_ip = socket.gethostbyname(socket.gethostname())
                 sip_inst = SIP.SIPMessage(buff)
                 if sip_inst.parse() is True:
                     print sip_inst.SIPMsg
@@ -133,15 +141,24 @@ def server(sip_port):
                         flows[addr] = f # Use port of remote end too
                         r = Receiver(addr)
                         r.start()
-                        sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
-                        reply = sip_inst.createInviteReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
+                        sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
+                        sdp_inst.setPort(8078)
+                        sdp_inst.setRtpmap()
+                        sdp_inst.setC()
+                        sdp_inst.setT()
+                        reply = sip_inst.createInviteReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, sip_port)
                         print "Sending invite reply:"
                         print reply
                         sent = sip_socket.sendto(reply, addr)
                         print >>sys.stderr, "Sent %s bytes to %s" % (sent, addr)
                     elif sip_inst.SIPCommand == "OPTIONS":
-                        sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
-                        reply = sip_inst.createOptionsReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
+                        sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
+                        sdp_inst.setPort(8078)
+                        sdp_inst.sip_port = sip_port
+                        sdp_inst.setRtpmap()
+                        sdp_inst.setC()
+                        sdp_inst.setT()
+                        reply = sip_inst.createOptionsReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, sip_port)
                         print "Sending options reply:"
                         print reply
                         sent = sip_socket.sendto(reply, addr)
@@ -149,7 +166,7 @@ def server(sip_port):
                     elif sip_inst.SIPCommand == "BYE":
                         #Leave
                         flows[addr].stop = True
-                        reply = sip_inst.createByeReplyMessage(server_ip)
+                        reply = sip_inst.createByeReplyMessage(server_ip, sip_port)
                         print "Sending bye reply:"
                         print reply
                         sent = sip_socket.sendto(reply, addr)
@@ -159,5 +176,6 @@ def server(sip_port):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--sip", help="SIP server port", type=int)
-    args = parser.parse_args()       
+    args = parser.parse_args()
+    server_ip = helpers.sockLocalIp()      
     server(args.sip)
