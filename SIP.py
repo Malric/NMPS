@@ -51,6 +51,7 @@ class SIPMessage:
 
           
     def parse(self):
+        """ Parses SIP Messages"""
         lines = self.SIPMsg.split("\r\n")
         
         try:
@@ -121,20 +122,13 @@ class SIPMessage:
         self.SIPMsg += "To: " + self.to +terminator #+ ";tag=a6c85cf" + "\r\n
         self.SIPMsg += "Call-ID: " + self.callID + terminator
         self.SIPMsg += "CSeq: " + self.cSeq + terminator
-        #self.SIPMsg += "Allow: "
-        #for i in range(len(commands)):
-        #    self.SIPMsg += commands[i]
-        #    if i!=len(commands)-1:
-        #        self.SIPMsg +=", "
-        #self.SIPMsg +=terminator
-        self.SIPMsg += "Contact: <sip:mbox-owner@127.0.0.1:6000>"+terminator
+        self.SIPMsg += "Contact: <sip:mbox-owner@+"+server_ip+":6000>"+terminator
         self.SIPMsg += "Content-Type: application/sdp"+terminator
         self.SIPMsg += "User-Agent: MBox SIP Server 0.1"+terminator
         self.SIPMsg += "Subject: "+self.subject+terminator
         self.SIPMsg += "Content-Length: " + str(len(SDPMsg)) + terminator+terminator
         self.SIPMsg += SDPMsg
         self.SIPMsg += terminator
-        print str(len(self.SIPMsg))
         return self.SIPMsg
     
     def createOptionsReplyMessage(self, SDPMsg, client_ip, server_ip):
@@ -147,7 +141,7 @@ class SIPMessage:
         self.SIPMsg += "To: " + self.to +terminator #+ ";tag=a6c85cf" + "\r\n
         self.SIPMsg += "Call-ID: " + self.callID + terminator
         self.SIPMsg += "CSeq: " + self.cSeq + terminator
-        self.SIPMsg += "Contact: <sip:mbox-owner@127.0.0.1:6000>"+terminator
+        self.SIPMsg += "Contact: <sip:mbox-owner@"+server_ip+":6000>"+terminator
         self.SIPMsg += "Allow: "
         for i in range(len(commands)):
             self.SIPMsg += commands[i]
@@ -158,7 +152,6 @@ class SIPMessage:
         self.SIPMsg += "Content-Length: " + str(len(SDPMsg)) + terminator+terminator
         self.SIPMsg += SDPMsg
         self.SIPMsg += terminator
-        print str(len(self.SIPMsg))
         return self.SIPMsg
     
     def createByeReplyMessage(self,server_ip):
