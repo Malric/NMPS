@@ -93,7 +93,7 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
             print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(3, socket.gethostbyname(socket.gethostname()), self.port_rtsp)
+            pl = playlist.getPlaylist(3, socket.gethostbyname(socket.getfqdn()), self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
             print "Playlist Server: Sending playlist"
             self.conn.sendall(reply)
@@ -124,7 +124,7 @@ class Accept_RTSP(threading.Thread):
         funcPointer["PLAY"] = p.createPlayReplyMessage
         funcPointer["PAUSE"] = p.createPauseReplyMessage
         session = random.randint(0,1000)
-        s = sdp.SDPMessage("LTunez", session)
+        s = sdp.SDPMessage("LTunez", "LTunez", session)
 
         # SCP Commands:
         u = scp.SCPMessage()
@@ -158,6 +158,7 @@ class Accept_RTSP(threading.Thread):
                         u.parse(reply)
                         if p.rtspCommand == "SETUP":
                             s.setPort(u.clientRtpPort)
+                            s.setMode("sendonly")
                 try:
                     """ Sending RTSP replies to clients"""
                     self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,str(session), u.sequence, u.rtptime))
