@@ -80,7 +80,7 @@ def getRecordList(ip, port):
     playlist = "#EXTM3U\r\n"
 
     for song in songs:
-        playlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://"+ip+":"+port+"/"+ song.path.lstrip("Wavs/")+"\r\n"
+        playlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://"+ip+":"+str(port)+"/"+ song.path.lstrip("Wavs/")+"\r\n"
 
     return playlist
 
