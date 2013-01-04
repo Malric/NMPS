@@ -93,9 +93,9 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
             print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(3, socket.gethostbyname(socket.gethostname()), self.port_rtsp)
+            pl = playlist.getPlaylist(4, "192.168.11.20", self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-            print "Playlist Server: Sending playlist"
+            print "Playlist Server: Sending playlist\r\n" + reply 
             self.conn.sendall(reply)
         else:
             print "Playlist Server: Invalid request from client"

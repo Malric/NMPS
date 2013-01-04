@@ -26,7 +26,7 @@ class Client():
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
     #HOST = '127.0.0.1'    # Local host
-    HOST = socket.gethostbyname(socket.gethostname())
+    HOST = "192.168.11.20"
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res

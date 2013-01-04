@@ -16,7 +16,7 @@ class SDPMessage:
         self.s = subject
         self.c = "IN IP4 " + ip
         self.t = "0 0"
-        self.m = "audio 8078 RTP/AVP 0 101"
+        self.m = "audio 8000 RTP/AVP 0 101"
         self.a = "rtpmap:0 PCMU/8000/1"
         self.SDPMsg = "v=" + self.v + terminator
         self.SDPMsg += "o=" + self.o + terminator

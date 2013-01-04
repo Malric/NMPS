@@ -23,9 +23,11 @@ import SDP_sip
 import ctypes
 import writer
 
+RTP_PACKET_MAX_SIZE = 1500
+
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
-    HOST = '127.0.0.1'    # Local host
+    HOST = '192.168.11.20'    # Local host
     #HOST = socket.gethostbyname(socket.gethostname())
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
@@ -59,17 +61,19 @@ class Receiver(threading.Thread):
         threading.Thread.__init__(self)
         self.load = ''
         self.addr = addr
-        self.rtp_socket = bind(8078)
-        self.rtcp_socket = bind(8079)
-
+        self.rtp_socket = bind(8000)
+        self.rtcp_socket = bind(8001)
+	self.count = 0
     def run(self):
         """ Main loop """
+	print 'Thread'
         inputs = []
         inputs.append(self.rtp_socket)
         inputs.append(self.rtcp_socket)
         rtpmessage = RTP.RTPMessage(24567)
         while True:
             if flows[self.addr].stop == True:
+		print 'OK,Done'
                 writer.wavwriter(self.load,len(self.load),'msg.wav')
                 flows.pop(self.addr)
                 inputs.remove(self.rtp_socket)
@@ -84,9 +88,10 @@ class Receiver(threading.Thread):
             for option in inputready:        
                 if option is self.rtcp_socket:
                     data = self.rtcp_socket.recv(1024)
-                    pass                 
+                    pass                
                     #print data # For now,lets see how it goes
                 if option is self.rtp_socket:
+		    print '.--------------------'
                     data, addr = self.rtp_socket.recvfrom_into(rtpmessage.header,12)
                     rtpmessage.updateFields()
                     offset = rtpmessage.getOffset()
@@ -95,7 +100,8 @@ class Receiver(threading.Thread):
                         data2,addr = self.rtp_socket.recvfrom(offset)
                         #print data2
                     payload, addr = self.rtp_socket.recvfrom(RTP_PACKET_MAX_SIZE)
-                    print len(payload)
+                    self.count += len(payload)
+		    print self.count
                     self.load += payload                    
                     # HANDLE PAYLOAD
          
@@ -122,7 +128,7 @@ def server(sip_port):
                     print 'Server: SIP ', msg
                     continue
                 print 'Server: SIP message from ', addr, ':'
-                server_ip = socket.gethostbyname(socket.gethostname())
+                server_ip = '192.168.11.20' #socket.gethostbyname(socket.gethostname())
                 sip_inst = SIP.SIPMessage(buff)
                 if sip_inst.parse() is True:
                     print sip_inst.SIPMsg
@@ -131,8 +137,10 @@ def server(sip_port):
                         #Start receiving
                         f = Flow()
                         flows[addr] = f # Use port of remote end too
-                        r = Receiver(addr)
+			print 'invite'                
+		        r = Receiver(addr)
                         r.start()
+			print 'started'
                         sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
                         reply = sip_inst.createInviteReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
                         print "Sending invite reply:"
