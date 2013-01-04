@@ -112,7 +112,7 @@ class SIPMessage:
         return True
         
     
-    def createInviteReplyMessage(self, SDPMsg, client_ip, server_ip):
+    def createInviteReplyMessage(self, SDPMsg, client_ip, server_ip, sip_port):
         self.SIPMsg = ""
         self.SIPMsg += self.protocol + " 200 OK"+terminator
         temp = self.via.split(";", 3)
@@ -122,7 +122,7 @@ class SIPMessage:
         self.SIPMsg += "To: " + self.to +terminator #+ ";tag=a6c85cf" + "\r\n
         self.SIPMsg += "Call-ID: " + self.callID + terminator
         self.SIPMsg += "CSeq: " + self.cSeq + terminator
-        self.SIPMsg += "Contact: <sip:mbox-owner@+"+server_ip+":6000>"+terminator
+        self.SIPMsg += "Contact: <sip:mbox-owner@"+server_ip+":"+str(sip_port)+">"+terminator
         self.SIPMsg += "Content-Type: application/sdp"+terminator
         self.SIPMsg += "User-Agent: MBox SIP Server 0.1"+terminator
         self.SIPMsg += "Subject: "+self.subject+terminator
@@ -131,7 +131,7 @@ class SIPMessage:
         self.SIPMsg += terminator
         return self.SIPMsg
     
-    def createOptionsReplyMessage(self, SDPMsg, client_ip, server_ip):
+    def createOptionsReplyMessage(self, SDPMsg, client_ip, server_ip, sip_port):
         self.SIPMsg = ""
         self.SIPMsg += self.protocol +" 200 OK"+terminator
         temp = self.via.split(";", 3)
@@ -141,7 +141,7 @@ class SIPMessage:
         self.SIPMsg += "To: " + self.to +terminator #+ ";tag=a6c85cf" + "\r\n
         self.SIPMsg += "Call-ID: " + self.callID + terminator
         self.SIPMsg += "CSeq: " + self.cSeq + terminator
-        self.SIPMsg += "Contact: <sip:mbox-owner@"+server_ip+":6000>"+terminator
+        self.SIPMsg += "Contact: <sip:mbox-owner@"+server_ip+":"+str(sip_port)+">"+terminator
         self.SIPMsg += "Allow: "
         for i in range(len(commands)):
             self.SIPMsg += commands[i]
@@ -154,16 +154,16 @@ class SIPMessage:
         self.SIPMsg += terminator
         return self.SIPMsg
     
-    def createByeReplyMessage(self,server_ip):
+    def createByeReplyMessage(self,server_ip, sip_port):
         self.SIPMsg = ""
-        self.SIPMsg += self.protocol + " 200 OK\r\n"
+        self.SIPMsg += self.protocol + " 200 OK"+terminator
         temp = self.via.split(";", 3)
-        self.SIPMsg += "Via: " + temp[0] + ";rport=" + temp[0].split(":", 2)[1] + ";" + temp[2] + "\r\n"
-        self.SIPMsg += "From: " + self.fr + "\r\nTo: " + self.to + ";tag=a6c85cf" + "\r\nCall-ID: " + self.callID + "\r\nCSeq: " + self.cSeq + "\r\n"
-        self.SIPMsg += "Contact: <sip:mbox-owner@"+server_ip+":6000>\r\n"
-        self.SIPMsg += "Content-Type: application/sdp\r\n"
-        self.SIPMsg += "User-Agent: MBox SIP Server 0.1\r\n"
-        self.SIPMsg += "Content-Length: 0\r\n\r\n"
+        self.SIPMsg += "Via: " + temp[0] + ";rport=" + temp[0].split(":", 2)[1] + ";" + temp[2] + terminator
+        self.SIPMsg += "From: " + self.fr + "\r\nTo: " + self.to + ";tag=a6c85cf" + "\r\nCall-ID: " + self.callID + "\r\nCSeq: " + self.cSeq + terminator
+        self.SIPMsg += "Contact: <sip:mbox-owner@"+server_ip+":"+str(sip_port)+">"+terminator
+        self.SIPMsg += "Content-Type: application/sdp"+terminator
+        self.SIPMsg += "User-Agent: MBox SIP Server 0.1"+terminator
+        self.SIPMsg += "Content-Length: 0"+terminator+terminator
         return self.SIPMsg
     
     

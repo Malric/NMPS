@@ -45,7 +45,7 @@ class SDPMessage:
         self.sdpMsg +="o="+self.o+terminator
         self.sdpMsg +="s="+self.s+terminator
         if self.c != "":
-            self.sdpMsg +="c="+self.t+terminator
+            self.sdpMsg +="c="+self.c+terminator
         if self.t != "":
             self.sdpMsg +="t="+self.t+terminator
         self.sdpMsg +="m="+self.m+terminator
