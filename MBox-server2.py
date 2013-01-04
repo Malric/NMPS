@@ -63,7 +63,7 @@ def startANDconnectStreamer(path):
         if pid < 0:
             return None
         elif pid == 0:
-            os.execlp('python','python','streamer.py',path)
+            os.execlp('python','python','streamer.py',path,"Records")
     print 'Forked'
     time.sleep(5)
     pathtosocket = 'Sockets/'+path
@@ -116,7 +116,7 @@ def startANDconnectReciever(path):
         return None
     return unixsocket
 '''
-'''   
+ 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
     def __init__(self,conn,addr, port_rtsp):
@@ -124,22 +124,23 @@ class Accept_PL(threading.Thread):
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
+        self.port_rtsp = port_rtsp
 
     def run(self):
         """ Override base class run() function. """
         data = self.conn.recv(1024)
         if data is None:
-            print "Playlist Server: No data"
+            print "Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
-            print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(5, socket.gethostbyname(socket.gethostname()), port_rtsp)
+            print "Server: Creating recordlist"
+            pl = playlist.getRecordList(socket.gethostbyname(socket.gethostname()), self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-            print "Playlist Server: Sending playlist"
+            print "Server: Sending recordlist"
             self.conn.sendall(reply)
         else:
-            print "Playlist Server: Invalid request from client"
+            print "Server: Invalid request from client"
         self.conn.close()
-'''
+
 
 class Accept_SIP(threading.Thread):
     """ Thread class. Thread handles SIP message request/reply. """
@@ -258,7 +259,8 @@ class Accept_RTSP(threading.Thread):
                 break 
 
 def server(port_rtsp, port_playlist, port_sip):
-    """ This function waits for RTSP/Playlist/SIP request and starts new thread. """  
+    """ This function waits for RTSP/Playlist/SIP request and starts new thread. """
+    playlist.initSongsWav()  
     inputs = []
     rtsp_socket = listen(port_rtsp) # TCP socket
     if rtsp_socket is None:
@@ -308,13 +310,12 @@ def server(port_rtsp, port_playlist, port_sip):
                 try:
                     conn,addr = playlist_socket.accept()
                 except socket.error as msg:
-                    print 'Server: Playlist ', msg
+                    print 'Server: Recordlist ', msg
                     continue
-                print 'Server: Playlist request from ', addr
-                '''
+                print 'Server: Recordlist request from ', addr
                 p = Accept_PL(conn, addr, port_rtsp)
                 p.start()
-                '''
+                
             elif option is sip_socket and not SIP_once:
                 SIP_once = True
                 buff = ''

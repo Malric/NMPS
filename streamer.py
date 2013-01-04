@@ -77,7 +77,7 @@ def main():
     # List of client
     clients = dict() #dict containing all clients for this song
     rtpheader = RTP.RTPMessage(24567)
-    wavef = wav.Wave('Wavs/'+sys.argv[1])
+    wavef = wav.Wave(sys.argv[2]+'/'+sys.argv[1])
     song = wavef.getdata()
     songsize = wavef.getnframes()
     while True:     

@@ -54,7 +54,7 @@ def startANDconnect(path):
         if pid < 0:
             return None
         elif pid == 0:
-            os.execlp('python','python','streamer.py',path)
+            os.execlp('python','python','streamer.py',path,"Wavs")
     print 'Forked'
     time.sleep(5)
     pathtosocket = 'Sockets/'+path

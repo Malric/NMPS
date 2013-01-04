@@ -14,7 +14,6 @@ import wav
 
 songs = []
 
-
 class Song:
 
     def __init__(self, length, artist, title, path):
@@ -24,9 +23,8 @@ class Song:
         self.path = path
         self.in_last_pl = False # determines whether the song was in the last playlist
 
-
 def initSongs():
-    """ This function creates wav files from MP3s and Song objects into 'songs' list. """
+    """ This function creates wav files from MP3s and Song objects into 'songs' list. Used in LTunez """
     global songs
     try:
         os.makedirs(os.getcwd() + "/Wavs") # create "Wavs" dir to current working dir
@@ -58,34 +56,43 @@ def initSongs():
         songs.append(song)
 
 def initSongsWav():
-    """ This function reads wav files and Song objects into 'songs' list. Used in MBox"""
+    """ This function reads wav files and creates Song objects into 'songs' list. Used in MBox """
     global songs
-    wav_filenames = os.listdir("Wavs")
+    try:
+        os.makedirs(os.getcwd() + "/Records") # create "Records" dir to current working dir
+    except OSError as exception:
+        if exception.errno != errno.EEXIST: # ignore error if path exists
+            raise
+    
+    wav_filenames = os.listdir("Records")
     for wav_filename in wav_filenames:
         if ".wav" in wav_filename:
-            wav_path = "Wavs/"+wav_filename
+            wav_path = "Records/"+wav_filename
             temp = wav_filename.split(".",2)
-            temp2 = temp[0].split("#",2)
+            temp2 = temp[0].split("-",2)  # wav files must be named: <caller>-<title>.wav
             artist = temp2[0]
-            title = "Message "+temp2[1]
+            title = temp2[1]
             wave = wav.Wave(wav_path)  
             length = wave.getDuration()
             song = Song(length, artist, title, wav_path)
             songs.append(song)
 
 def getRecordList(ip, port):
-    """ This function returns a recordlist string in M3U format. Used in MBox"""
+    """ This function returns a recordlist string in M3U format. Used in MBox """
     global songs
 
-    playlist = "#EXTM3U\r\n"
+    recordlist = "#EXTM3U\r\n"
 
     for song in songs:
-        playlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://"+ip+":"+port+"/"+ song.path.lstrip("Wavs/")+"\r\n"
+        i = song.path.rfind("/")
+        wav_filename = song.path[i+1:]
+        print "Server: Adding '" + wav_filename + "' to recordlist"
+        recordlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://"+ip+":"+str(port)+"/"+wav_filename+"\r\n"
 
-    return playlist
+    return recordlist
 
 def getPlaylist(size, ip, port):
-    """ This function returns a playlist string in M3U format. Playlist size is defined by 'size' parameter """
+    """ This function returns a playlist string in M3U format. Used in LTunez """
     global songs
     
     pl_idxs = [] # songs to playlist (song indexes in 'songs' list)
@@ -105,7 +112,6 @@ def getPlaylist(size, ip, port):
         pl_idxs = random.sample(idxs, size)
     else: # songs have to be chosen from the whole 'songs' list
         pl_idxs = random.sample(range(songs.__len__()), size)
-    
     
     playlist = "#EXTM3U\r\n"
     
