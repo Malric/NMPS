@@ -19,7 +19,7 @@ import tempfile
 import random
 import helpers
 
-server_ip =""
+server_ip = ""
 
 def listen(PORT):
     """ Create listening socket """
@@ -175,6 +175,9 @@ class Accept_RTSP(threading.Thread):
 
 def server(port_rtsp,port_playlist):
     """ This function waits for RTSP/Playlist request and starts new thread. """
+    global server_ip 
+    server_ip = helpers.tcpLocalIp()
+    print "Server: My IP: " + server_ip
     playlist.initSongs()    
     inputs = []
     rtspsocket = listen(port_rtsp)
