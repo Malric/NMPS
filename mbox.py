@@ -103,7 +103,7 @@ class Receiver(threading.Thread):
                     payload, addr = self.rtp_socket.recvfrom(RTP_PACKET_MAX_SIZE)
                     print "Single packet: " +str(len(payload))
                     self.load += payload
-                    print "Total load: " +str(len(self.len))            
+                    print "Total load: " +str(len(self.load))            
                     # HANDLE PAYLOAD
          
 def server(sip_port):
