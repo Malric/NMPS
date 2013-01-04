@@ -5,6 +5,9 @@
 import NTP
 import math
 import socket
+import helpers
+
+server_ip = helpers.sockLocalIp()
 
 terminator = "\r\n"
 
@@ -14,7 +17,7 @@ class SDPMessage:
         self.v = "0"
         self.s = subject
         self.o = program+" "+str(session)+" "+NTP.timestamp()+" IN IP4 "\
-				 +socket.gethostbyname(socket.getfqdn())
+				 +server_ip
         self.m = "audio 0 RTP/AVP 0" #u-law PCM! <-- Fix me for A-law # removed /2
         self.mode = ""
         self.rtpmap = ""
@@ -31,11 +34,11 @@ class SDPMessage:
         self.rtpmap = "rtpmap:0 PCMU/8000/1"
 
     def setC(self):
-        self.c = "IN IP4 " + socket.gethostbyname(socket.getfqdn())
+        self.c = "IN IP4 " + server_ip
 
     def setT(self):
         self.t = "0 0"
-        
+
     def getMessage(self):
         #print self.sdpMsg
         self.sdpMsg = "v="+self.v+terminator

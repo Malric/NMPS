@@ -17,6 +17,9 @@ import time
 import scp
 import tempfile
 import random
+import helpers
+
+server_ip =""
 
 def listen(PORT):
     """ Create listening socket """
@@ -79,7 +82,7 @@ def startANDconnect(path):
                  
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
-    def __init__(self,conn,addr, port_rtsp):
+    def __init__(self, conn, addr, port_rtsp):
         """ Initialize with socket and address. """
         threading.Thread.__init__(self)
         self.conn = conn
@@ -93,7 +96,7 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: No data"
         elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
             print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(3, socket.gethostbyname(socket.getfqdn()), self.port_rtsp)
+            pl = playlist.getPlaylist(3, server_ip, self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
             print "Playlist Server: Sending playlist\r\n" + reply 
             self.conn.sendall(reply)
@@ -218,6 +221,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--playlist", help="playlist server port", type=int)
     parser.add_argument("-r", "--rtsp", help="rtsp server port", type=int)
-    args = parser.parse_args()       
+    args = parser.parse_args()
+    server_ip = helpers.sockLocalIp()   
     server(args.rtsp,args.playlist)
 

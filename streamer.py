@@ -13,6 +13,7 @@ import scp
 import wave
 import ctypes
 import wav
+import helpers
 
 class Client():
     rtp = 0  # rtp port
@@ -26,7 +27,7 @@ class Client():
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
     #HOST = '127.0.0.1'    # Local host
-    HOST = socket.gethostbyname(socket.getfqdn())
+    HOST = helpers.sockLocalIp()
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res
