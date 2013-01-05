@@ -118,7 +118,7 @@ class Playlist:
         self.winNPL.noutrefresh()
         
       
-def main(host,port):
+def main(host,port,client_name):
     """ Handle all events. """
     #Initialize curses,terminal graphics
     stdscr = curses.initscr()
@@ -153,7 +153,7 @@ def main(host,port):
     #Send request to playlist server
     sock = connect(host,port)
     if(sock != None):
-        req = "GET PLAYLIST\r\nLtunez-Client\r\n\r\n"
+        req = "GET PLAYLIST\r\nLtunez-Client\r\n"+client_name+"\r\n\r\n"
         sock.send(req)
         inputs.append(sock)
     quit = False;
@@ -191,12 +191,11 @@ def main(host,port):
     curses.endwin()
 
 if __name__ == "__main__":
-    if(len(sys.argv) == 1):
-        print 'MBox server address & port missing'
-        sys.exit(0)
-    elif(len(sys.argv) != 2):
-        print 'Extra parameters'
+    if(len(sys.argv) != 3):
+        print 'Usage: python mbox-client.py <server_ip>:<server_playlist_port> <your_name>'
         sys.exit(0)
     else:
         inf = sys.argv[1].split(':')
-    main(inf[0],inf[1])
+	client_name = sys.argv[2]
+    main(inf[0],inf[1],client_name)
+
