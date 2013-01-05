@@ -1,9 +1,10 @@
-####
+###
 #
-# Playlist generation including MP3 to wav (pcm mu-law) conversion
-# Playlist is randomly generated from the songs that were not in the previous playlist (if possible)
+# LTunez: Playlist generation including MP3 to wav (pcm mu-law) conversion
+# Ltunez: Playlist is randomly generated from the songs that were not in the previous playlist (if possible)
+# MBox: Playlist is generated from specific client's recordings
 #
-####
+###
 
 import os
 import errno
@@ -14,8 +15,7 @@ import wav
 
 songs = []
 
-class Song:
-
+class Song: # used in LTunez
     def __init__(self, length, artist, title, path):
         self.length = length
         self.artist = artist
@@ -55,42 +55,6 @@ def initSongs():
         song = Song(length, tag.getArtist(), tag.getTitle(), wav_path)
         songs.append(song)
 
-def initSongsWav():
-    """ This function reads wav files and creates Song objects into 'songs' list. Used in MBox """
-    global songs
-    try:
-        os.makedirs(os.getcwd() + "/Records") # create "Records" dir to current working dir
-    except OSError as exception:
-        if exception.errno != errno.EEXIST: # ignore error if path exists
-            raise
-    
-    wav_filenames = os.listdir("Records")
-    for wav_filename in wav_filenames:
-        if ".wav" in wav_filename:
-            wav_path = "Records/"+wav_filename
-            temp = wav_filename.split(".",2)
-            temp2 = temp[0].split("-",2)  # wav files must be named: <caller>-<title>.wav
-            artist = temp2[0]
-            title = temp2[1]
-            wave = wav.Wave(wav_path)  
-            length = wave.getDuration()
-            song = Song(length, artist, title, wav_path)
-            songs.append(song)
-
-def getRecordList(ip, port):
-    """ This function returns a recordlist string in M3U format. Used in MBox """
-    global songs
-
-    recordlist = "#EXTM3U\r\n"
-
-    for song in songs:
-        i = song.path.rfind("/")
-        wav_filename = song.path[i+1:]
-        print "Server: Adding '" + wav_filename + "' to recordlist"
-        recordlist += "#EXTINF:" + str(song.length) + ", " + song.artist + " - " + song.title +"\r\nrtsp://"+ip+":"+str(port)+"/"+wav_filename+"\r\n"
-
-    return recordlist
-
 def getPlaylist(size, ip, port):
     """ This function returns a playlist string in M3U format. Used in LTunez """
     global songs
@@ -121,5 +85,42 @@ def getPlaylist(size, ip, port):
         print "Playlist Server: Adding '" + wav_filename + "' to playlist"
         playlist += "#EXTINF:" + str(songs[idx].length) + ", " + songs[idx].artist + " - " + songs[idx].title + "\r\nrtsp://"+ip+":"+str(port)+"/" + wav_filename + "\r\n"
         songs[idx].in_last_pl = True
-        
     return playlist
+
+class Record: # used in MBox
+    def __init__(self, length, caller, title, path):
+        self.length = length
+        self.caller = caller
+        self.title = title
+        self.path = path
+
+def getRecordList(ip, port, client_name):
+    """ This function returns a recordlist string for a client in M3U format. Used in MBox """
+    if os.path.isdir(os.getcwd() + "/" + client_name):
+        print "Playlist Server: Client folder found"
+    else:
+        print "Playlist Server: Client folder not found"
+        return False
+    
+    records = []
+    
+    wav_filenames = os.listdir(client_name)
+    for wav_filename in wav_filenames:
+        if ".wav" in wav_filename:
+            wav_path = client_name + "/" + wav_filename
+            temp = wav_filename.split(".",2)
+            temp2 = temp[0].split("-",2)  # wav files must be named: <caller>-<title>.wav
+            caller = temp2[0]
+            title = temp2[1]
+            wave = wav.Wave(wav_path)  
+            length = wave.getDuration()
+            record = Record(length, caller, title, wav_path)
+            records.append(record)
+
+    recordlist = "#EXTM3U\r\n"
+    for record in records:
+        i = record.path.rfind("/")
+        wav_filename = record.path[i+1:]
+        print "Playlist Server: Adding '" + wav_filename + "' to playlist"
+        recordlist += "#EXTINF:" + str(record.length) + ", " + record.caller + " - " + record.title +"\r\nrtsp://"+ip+":"+str(port)+"/"+wav_filename+"\r\n"
+    return recordlist
