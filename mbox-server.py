@@ -136,13 +136,18 @@ class Accept_PL(threading.Thread):
         data = self.conn.recv(1024)
         if data is None:
             print "Playlist Server: No data"
-        elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
-            pl = playlist.getRecordList(server_ip, self.port_rtsp, "lauri")
-            reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-            print "Playlist Server: Sending playlist"
-            self.conn.sendall(reply)
         else:
-            print "Playlist Server: Invalid request from client"
+            lines = data.splitlines()
+            if lines[0] == "GET PLAYLIST" and lines[1] == "Ltunez-Client":
+                client_name = lines[2]
+                print "Playlist Server: Got playlist request for client: " + client_name
+                pl = playlist.getRecordList(server_ip, self.port_rtsp, client_name)
+                if pl:
+                    reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
+                    print "Playlist Server: Sending playlist reply:\r\n" + reply
+                    self.conn.sendall(reply)
+            else:
+                print "Playlist Server: Invalid request from client"
         self.conn.close()
 
 '''
