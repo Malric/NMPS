@@ -71,9 +71,8 @@ def startANDconnectStreamer(file_path):
             return None
         elif pid == 0:
             os.execlp('python','python','streamer.py',file_path,socket_path)
-    print 'Forked'
-    time.sleep(5)
-    print 'server',file_path
+    print 'Server: Forked'
+    time.sleep(2)
     temp_path = os.tmpnam()
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)

@@ -51,17 +51,17 @@ def listen(PORT):
         break
     return s
 
-def startANDconnect(path):
-    if not os.path.exists('Sockets/'+path):
+def startANDconnect(file_name):
+    file_path = 'Wavs/' + file_name
+    socket_path = 'Sockets/' + file_name
+    if not os.path.exists(socket_path):
         pid = os.fork()
         if pid < 0:
             return None
         elif pid == 0:
-            os.execlp('python','python','streamer.py',path,"Wavs")
-    print 'Forked'
-    time.sleep(5)
-    pathtosocket = 'Sockets/'+path
-    print 'server',path
+            os.execlp('python','python','streamer.py',file_path,socket_path)
+    print 'Server: Forked'
+    time.sleep(2)
     temp_path = os.tmpnam()
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
@@ -74,12 +74,12 @@ def startANDconnect(path):
         print 'RTSP thread unix socket bind',msg
         return None
     try:
-        unixsocket.connect(pathtosocket)
+        unixsocket.connect(socket_path)
     except socket.error as msg:
         print 'RTSP thread unix socket connect',msg
         return None
     return unixsocket
-                 
+
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
     def __init__(self, conn, addr, port_rtsp):
@@ -98,7 +98,7 @@ class Accept_PL(threading.Thread):
             print "Playlist Server: Creating playlist"
             pl = playlist.getPlaylist(3, server_ip, self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-            print "Playlist Server: Sending playlist\r\n" + reply 
+            print "Playlist Server: Sending playlist:\r\n" + reply 
             self.conn.sendall(reply)
         else:
             print "Playlist Server: Invalid request from client"
