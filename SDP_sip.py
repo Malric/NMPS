@@ -4,8 +4,6 @@
 #
 ###
 
-import socket
-
 terminator="\r\n"
 
 class SDPMessage:
@@ -25,4 +23,3 @@ class SDPMessage:
         self.SDPMsg += "t=" + self.t + terminator
         self.SDPMsg += "m=" + self.m + terminator
         self.SDPMsg += "a=" + self.a + terminator
-        

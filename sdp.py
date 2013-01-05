@@ -1,13 +1,13 @@
-##
-# SDP Message
-##
+###
+#
+# SDP Message (RTSP version)
+#
+###
 
 import NTP
-import math
-import socket
 import helpers
 
-server_ip = helpers.sockLocalIp()
+server_ip = helpers.tcpLocalIp()
 
 terminator = "\r\n"
 
@@ -23,7 +23,7 @@ class SDPMessage:
         self.rtpmap = ""
         self.c = ""
         self.t = ""
-	   
+
     def setPort(self, port):
         self.m = "audio "+str(port)+" RTP/AVP 0"
 
@@ -54,4 +54,3 @@ class SDPMessage:
         if self.mode != "":
             self.sdpMsg +="a="+self.mode
         return self.sdpMsg
-
