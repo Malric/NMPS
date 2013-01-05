@@ -51,11 +51,11 @@ def bind(PORT):
 def main():
     """ Control section for streamer. """
     # Create unix socket for IPC
-    path = 'Sockets/'+sys.argv[1]
-    if os.path.exists(path): #Caution
+    socket_path = sys.argv[2]
+    if os.path.exists(socket_path): #Caution
         sys.exit(1)
     unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    unix_socket.bind(path)
+    unix_socket.bind(socket_path)
     # Create rtp and rtcp socket
     while True:
         while True:
@@ -78,7 +78,7 @@ def main():
     # List of client
     clients = dict() #dict containing all clients for this song
     rtpheader = RTP.RTPMessage(24567)
-    wavef = wav.Wave(sys.argv[2]+'/'+sys.argv[1])
+    wavef = wav.Wave(sys.argv[1])
     song = wavef.getdata()
     songsize = wavef.getnframes()
     while True:     
@@ -125,7 +125,7 @@ def main():
         if ONCE and len(clients) == 0:
             break
     unix_socket.close()
-    os.remove(path)
+    os.remove(socket_path)
     rtp_socket.close()
     rtcp_socket.close()
         

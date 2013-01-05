@@ -122,5 +122,5 @@ def getRecordList(ip, port, client_name):
         i = record.path.rfind("/")
         wav_filename = record.path[i+1:]
         print "Playlist Server: Adding '" + wav_filename + "' to playlist"
-        recordlist += "#EXTINF:" + str(record.length) + ", " + record.caller + " - " + record.title +"\r\nrtsp://"+ip+":"+str(port)+"/"+wav_filename+"\r\n"
+        recordlist += "#EXTINF:" + str(record.length) + ", " + record.caller + " - " + record.title +"\r\nrtsp://"+ip+":"+str(port)+"/"+client_name +"/"+wav_filename+"\r\n"
     return recordlist

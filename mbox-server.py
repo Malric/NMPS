@@ -62,17 +62,18 @@ def bind(PORT):
     s.bind((HOST, PORT))
     return s
 
-def startANDconnectStreamer(path):
-    if not os.path.exists('Sockets/'+path):
+def startANDconnectStreamer(file_path):
+    socket_name = file_path.replace('/', '-')
+    socket_path = 'Sockets/' + socket_name
+    if not os.path.exists(socket_path):
         pid = os.fork()
         if pid < 0:
             return None
         elif pid == 0:
-            os.execlp('python','python','streamer.py',path,"lauri")
+            os.execlp('python','python','streamer.py',file_path,socket_path)
     print 'Forked'
     time.sleep(5)
-    pathtosocket = 'Sockets/'+path
-    print 'server',path
+    print 'server',file_path
     temp_path = os.tmpnam()
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
@@ -85,7 +86,7 @@ def startANDconnectStreamer(path):
         print 'RTSP thread unix socket bind',msg
         return None
     try:
-        unixsocket.connect(pathtosocket)
+        unixsocket.connect(socket_path)
     except socket.error as msg:
         print 'RTSP thread unix socket connect',msg
         return None
@@ -237,7 +238,7 @@ class Accept_RTSP(threading.Thread):
                 break
             else:
                 if p.rtspCommand == "SETUP":
-                    unixsocket = startANDconnectStreamer(p.pathname)            
+                    unixsocket = startANDconnectStreamer(p.pathname)
                     if unixsocket is None:
                         self.conn.close()
                         break    
