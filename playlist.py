@@ -26,12 +26,6 @@ class Song: # used in LTunez
 def initSongs():
     """ This function creates wav files from MP3s and Song objects into 'songs' list. Used in LTunez """
     global songs
-    try:
-        os.makedirs(os.getcwd() + "/Wavs") # create "Wavs" dir to current working dir
-    except OSError as exception:
-        if exception.errno != errno.EEXIST: # ignore error if path exists
-            raise
-    
     mp3_filenames = os.listdir("MP3s")
     
     for mp3_filename in mp3_filenames:
