@@ -4,6 +4,7 @@ import curses
 import re
 import sys
 import os
+import plp
 
 
 def connect(host,port):
@@ -44,18 +45,16 @@ class Playlist:
             lines = data.splitlines()
         except:#be more explicit
             print 'data.splitlines()' 
-        if lines[0] == "Playlist OK":
-            if lines[1] == "Ltunez-Server":
-                if  lines[2] == "#EXTM3U":
-                    for line in lines[3:len(lines) - 1]:
-                        if lines.index(line)%2 == 0:
-                            continue
-                        try:        
-                            lst = re.split('#EXTINF:|,|-',line,3)
-                        except:#be more explicit
-                            print 're.split()'
-                        self.playlist[index] = [int(lst[1]),lst[2],lst[3],lines[(lines.index(line))+1]]
-                        index += 1
+        if  lines[0] == "#EXTM3U":
+            for line in lines[0:len(lines) - 1]:
+                if lines.index(line)%2 == 0:
+                    continue
+                try:        
+                    lst = re.split('#EXTINF:|,|-',line,3)
+                except:#be more explicit
+                    print 're.split()'
+                self.playlist[index] = [int(lst[1]),lst[2],lst[3],lines[(lines.index(line))+1]]
+                index += 1
         self.draw()
 
     def next(self):
@@ -77,7 +76,6 @@ class Playlist:
         self.draw()
 
     def play(self):
-        #print self.playlist[self.cursor]
         if self.vlc != 0:
             os.system('kill -2 '+str(self.vlc))
         pid = os.fork()
@@ -117,7 +115,6 @@ class Playlist:
             self.winNPL.addstr(1,18,self.playlist[self.cursor][2])
         self.winNPL.noutrefresh()
         
-      
 def main(host,port):
     """ Handle all events. """
     #Initialize curses,terminal graphics
@@ -152,8 +149,9 @@ def main(host,port):
     inputs.append(sys.stdin)
     #Send request to playlist server
     sock = connect(host,port)
+    plpmessage = plp.PLPMessage()
     if(sock != None):
-        req = "GET PLAYLIST\r\nLtunez-Client\r\n\r\n"
+        req = plpmessage.createLTunezClientRequest()
         sock.send(req)
         inputs.append(sock)
     quit = False;
@@ -174,11 +172,20 @@ def main(host,port):
                 elif ch == curses.KEY_RIGHT:
                     playlist.next()  
                 elif ch == curses.KEY_LEFT:
-                    playlist.previous()  
+                    playlist.previous()
+                elif ch == 114 or ch == 82:
+                    #reqPlaylist=True
+                    sock = connect(host,port)
+                    if(sock != None):
+                        req = plpmessage.createLTunezClientRequest()
+                        sock.send(req)
+                        inputs.append(sock)
             else:
                 data = data + ins.recv(1024)
                 if re.search('\\r\\n\\r\\n',data):
-                    playlist.parse(data)
+                    plpmessage.parse(data)
+                    print plpmessage.playlist
+                    playlist.parse(plpmessage.playlist)
                     data = ''
             curses.doupdate()
         if quit:

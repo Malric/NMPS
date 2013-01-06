@@ -94,7 +94,7 @@ class Accept_PL(threading.Thread):
         data = self.conn.recv(1024)
         if data is None:
             print "Playlist Server: No data"
-        elif data == "GET PLAYLIST\r\nLtunez-Client\r\n\r\n":
+        elif data == "GET PLAYLIST\r\nLTunez-Client\r\n\r\n":
             print "Playlist Server: Creating playlist"
             pl = playlist.getPlaylist(3, server_ip, self.port_rtsp)
             reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
