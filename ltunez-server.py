@@ -18,6 +18,7 @@ import scp
 import tempfile
 import random
 import helpers
+import plp
 
 server_ip = ""
 
@@ -82,26 +83,31 @@ def startANDconnect(file_name):
 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
-    def __init__(self, conn, addr, port_rtsp):
+    def __init__(self, conn, addr, port_rtsp, playlistLen):
         """ Initialize with socket and address. """
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
         self.port_rtsp = port_rtsp
+        self.playlistLen = playlistLen
 
     def run(self):
         """ Override base class run() function. """
         data = self.conn.recv(1024)
         if data is None:
             print "Playlist Server: No data"
-        elif data == "GET PLAYLIST\r\nLTunez-Client\r\n\r\n":
-            print "Playlist Server: Creating playlist"
-            pl = playlist.getPlaylist(3, server_ip, self.port_rtsp)
-            reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-            print "Playlist Server: Sending playlist reply:\r\n" + reply 
+        plpmessage = plp.PLPMessage()
+        plpmessage.parse(data)
+        if plpmessage.command == "GET PLAYLIST" and plpmessage.program =="LTunez-Client":
+            #print "Playlist Server: Creating playlist"
+            pl = playlist.getPlaylist(self.playlistLen, server_ip, self.port_rtsp)
+            reply = plpmessage.createServerOkResponse("LTunez-Server", pl)
+            #print "Playlist Server: Sending playlist reply:\r\n" + reply 
             self.conn.sendall(reply)
         else:
-            print "Playlist Server: Invalid request from client"
+            #print "Playlist Server: Invalid request from client"
+            reply = plpmessage.createServerFailureResponse("LTunez-Server")
+            self.conn.sendall(reply)
         self.conn.close()
 
 class Accept_RTSP(threading.Thread):
@@ -173,11 +179,11 @@ class Accept_RTSP(threading.Thread):
                 break 
       
 
-def server(port_rtsp,port_playlist):
+def server(port_rtsp, port_playlist, playlistLen):
     """ This function waits for RTSP/Playlist request and starts new thread. """
-    global server_ip 
+    global server_ip
+    playlistLen = playlistLen
     server_ip = helpers.tcpLocalIp()
-    print "Server: My IP: " + server_ip
     playlist.initSongs()    
     inputs = []
     rtspsocket = listen(port_rtsp)
@@ -217,14 +223,21 @@ def server(port_rtsp,port_playlist):
                     print 'Server: Playlist ',msg
                     continue
                 print 'Server: Playlist request from ', addr
-                p = Accept_PL(conn,addr,port_rtsp)
+                p = Accept_PL(conn,addr,port_rtsp, playlistLen)
                 p.start()
    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--playlist", help="playlist server port", type=int)
     parser.add_argument("-r", "--rtsp", help="rtsp server port", type=int)
+    parser.add_argument("-pl", "--playlistLen", help="Amount of items in playlist messages", type=int)
     args = parser.parse_args()
+    playlistLen = 3
+    if args.playlistLen is not None:
+        if args.playlistLen >0 and args.playlistLen <10:
+            playlistLen = args.playlistLen
+    else:
+        playlistLen = 3
     server_ip = helpers.sockLocalIp()   
-    server(args.rtsp,args.playlist)
+    server(args.rtsp,args.playlist, playlistLen)
 

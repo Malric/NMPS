@@ -184,8 +184,10 @@ def main(host,port):
                 data = data + ins.recv(1024)
                 if re.search('\\r\\n\\r\\n',data):
                     plpmessage.parse(data)
-                    print plpmessage.playlist
-                    playlist.parse(plpmessage.playlist)
+                    if plpmessage.command == "Playlist OK":
+                        playlist.parse(plpmessage.playlist)
+                    else:
+                        print "Request failed\r\n"
                     data = ''
             curses.doupdate()
         if quit:

@@ -12,7 +12,6 @@ terminator = "\r\n"
 class PLPMessage:
 
     def __init__(self):
-        self.protocol       = "PLP/1.0"
         self.program        = ""
         self.command 	 	= ""
         self.message        = ""
