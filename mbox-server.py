@@ -22,6 +22,7 @@ import random
 import SIP
 import SDP_sip
 import helpers
+import plp
 
 server_ip = ""
 
@@ -137,17 +138,19 @@ class Accept_PL(threading.Thread):
         if data is None:
             print "Playlist Server: No data"
         else:
-            lines = data.splitlines()
-            if lines[0] == "GET PLAYLIST" and lines[1] == "Ltunez-Client":
-                client_name = lines[2]
-                print "Playlist Server: Got playlist request for client: " + client_name
-                pl = playlist.getRecordList(server_ip, self.port_rtsp, client_name)
+            plpmessage = plp.PLPMessage()
+            plpmessage.parse(data)
+            reply = ""
+            if plpmessage.command == "GET PLAYLIST" and plpmessage.program == "MBox-Client":
+                print "Playlist Server: Got playlist request for client: " + plpmessage.userid
+                pl = playlist.getRecordList(server_ip, self.port_rtsp, plpmessage.userid)
                 if pl:
-                    reply = "Playlist OK\r\nLtunez-Server\r\n" + pl + "\r\n"
-                    print "Playlist Server: Sending playlist reply:\r\n" + reply
-                    self.conn.sendall(reply)
+                    reply = plpmessage.createServerOkResponse("MBox-Server", pl)
+                else:
+                    reply = plpmessage.createServerFailureResponse("MBox-Server")
             else:
-                print "Playlist Server: Invalid request from client"
+                reply = plpmessage.createServerFailureResponse("MBox-Server")
+            self.conn.sendall(reply)
         self.conn.close()
 
 '''
