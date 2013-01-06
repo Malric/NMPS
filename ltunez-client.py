@@ -200,7 +200,7 @@ def main(host,port):
 
 if __name__ == "__main__":
     if(len(sys.argv) == 1):
-        print 'Ltunes server address & port missing'
+        print 'Ltunez server address & port missing'
         sys.exit(0)
     elif(len(sys.argv) != 2):
         print 'Extra parameters'

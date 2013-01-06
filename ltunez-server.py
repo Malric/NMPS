@@ -52,6 +52,8 @@ def listen(PORT):
 
 def startANDconnect(file_name):
     file_path = 'Wavs/' + file_name
+    if not os.path.isdir("Sockets"):
+        os.mkdir("Sockets")
     socket_path = 'Sockets/' + file_name
     if not os.path.exists(socket_path):
         pid = os.fork()
