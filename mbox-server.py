@@ -283,6 +283,8 @@ def server(port_rtsp, port_playlist, port_sip):
     global server_ip 
     server_ip = helpers.tcpLocalIp()
     print "Server: My IP: " + server_ip
+    helpers.createDir("Records")
+    helpers.createDir("Sockets")
     inputs = []
     rtsp_socket = listen(port_rtsp) # TCP socket
     if rtsp_socket is None:
@@ -317,7 +319,8 @@ def server(port_rtsp, port_playlist, port_sip):
             rtsp_socket.close()
             playlist_socket.close()
             sip_socket.close()
-            shutil.rmtree(os.getcwd() + "/Records", ignore_errors=True) # remove "Wavs" dir
+            shutil.rmtree(os.getcwd() + "/Sockets", ignore_errors=True) # remove "Sockets" dir
+            shutil.rmtree(os.getcwd() + "/Records", ignore_errors=True) # remove "Records" dir
             sys.exit(0)
         for option in inputready:
             if option is rtsp_socket:
