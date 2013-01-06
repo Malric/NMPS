@@ -84,8 +84,6 @@ def bind(PORT):
 
 def startANDconnectStreamer(file_path):
     socket_name = file_path.replace('/', '-')
-    if not os.path.isdir("Sockets"):
-        os.mkdir("Sockets")
     socket_path = 'Sockets/' + socket_name
     if not os.path.exists(socket_path):
         pid = os.fork()
