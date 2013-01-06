@@ -187,6 +187,7 @@ def server(port_rtsp, port_playlist, playlistLen):
     playlistLen = playlistLen
     server_ip = helpers.tcpLocalIp()
     print "Server: My IP: " + server_ip
+    helpers.createDir("Sockets")
     playlist.initSongs()    
     inputs = []
     rtspsocket = listen(port_rtsp)

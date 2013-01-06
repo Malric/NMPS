@@ -1,5 +1,7 @@
-import socket
 import datetime
+import errno
+import os
+import socket
 
 ##
 # Binding helper
@@ -64,3 +66,10 @@ def getTimestamp():
     time = datetime.datetime.today()
     timestamp = str(time.year)+"_"+str(time.month)+"_"+str(time.day)+"_"+str(time.hour)+"_"+str(time.minute)+"_"+str(time.second)
     return timestamp
+
+def createDir(name):
+    try:
+        os.makedirs(os.getcwd() + "/" +name) # create dir to current working dir
+    except OSError as exception:
+        if exception.errno != errno.EEXIST: # ignore error if path exists
+            raise
