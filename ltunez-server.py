@@ -167,7 +167,12 @@ class Accept_RTSP(threading.Thread):
                         u.parse(reply)
                         if p.rtspCommand == "SETUP":
                             s.setPort(u.clientRtpPort)
+                            s.setRtpmap()
                             s.setMode("sendonly")
+                if p.rtspCommand == "DESCRIBE":
+                    s.setPort(0)
+                    s.setRtpmap()
+                    s.setMode("sendonly")
                 try:
                     """ Sending RTSP replies to clients"""
                     self.conn.sendall(funcPointer[p.rtspCommand](p.cseq,p.URI,s.getMessage(),p.transport,p.clientport,u.clientRtpPort+'-'+u.clientRtcpPort,str(session), u.sequence, u.rtptime))
