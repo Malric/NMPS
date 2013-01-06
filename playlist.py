@@ -97,7 +97,7 @@ class Record: # used in MBox
 
 def getRecordList(ip, port, client_name):
     """ This function returns a recordlist string for a client in M3U format. Used in MBox """
-    if os.path.isdir(os.getcwd() + "/" + client_name):
+    if os.path.isdir(os.getcwd() + "Records/" + client_name):
         print "Playlist Server: Client folder found"
     else:
         print "Playlist Server: Client folder not found"
@@ -105,10 +105,10 @@ def getRecordList(ip, port, client_name):
     
     records = []
     
-    wav_filenames = os.listdir(client_name)
+    wav_filenames = os.listdir("Records/"+client_name)
     for wav_filename in wav_filenames:
         if ".wav" in wav_filename:
-            wav_path = client_name + "/" + wav_filename
+            wav_path = "Records/"+client_name + "/" + wav_filename
             temp = wav_filename.split(".",2)
             temp2 = temp[0].split("-",2)  # wav files must be named: <caller>-<title>.wav
             caller = temp2[0]

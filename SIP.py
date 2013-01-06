@@ -30,6 +30,7 @@ class SIPMessage:
         self.contentLen = ""
         self.client_ip =""
         self.userId = ""
+        self.callerId = ""
 
         if message is not None:
             self.SIPMsg = message
@@ -79,6 +80,7 @@ class SIPMessage:
             hits = self.fromRegex.search(line)
             if hits is not None:
                 self.fr = hits.group(1)
+                self.callerId = self.fr.split("@",2)[0].split(":",2)[1]
             hits = self.toRegex.search(line)
             if hits is not None:
                 self.to = hits.group(1)

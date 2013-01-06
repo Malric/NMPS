@@ -32,7 +32,7 @@ RTP_PACKET_MAX_SIZE = 1500
 
 def getTimestamp():
     time = datetime.datetime.today()
-    timestamp = str(time.year)+"."+str(time.month)+"."+str(time.day)+"_"+str(time.hour)+":"+str(time.minute)+":"+str(time.second)
+    timestamp = str(time.year)+"_"+str(time.month)+"_"+str(time.day)+"_"+str(time.hour)+"_"+str(time.minute)+"_"+str(time.second)
     return timestamp
 
 def bind(PORT):
@@ -66,7 +66,7 @@ flows = dict()
 
 class Receiver(threading.Thread):
     """ Receives rtp and rtcp messages """
-    def __init__(self,addr, userid):
+    def __init__(self,addr, userId, callerId):
         """ Init """
         threading.Thread.__init__(self)
         self.load = ''
@@ -75,7 +75,8 @@ class Receiver(threading.Thread):
         self.rtcp_socket = bind(8079)
         self.rbuf = io.BytesIO()
         self.offset = 0
-        self.userid = userid
+        self.userId = userId
+        self.callerId = callerId
 
     def run(self):
         """ Main loop """
@@ -86,7 +87,8 @@ class Receiver(threading.Thread):
         while True:
             if flows[self.addr].stop == True:
                 print "Printing file"
-                writer.wavwriter(self.load,len(self.load),self.userid+"_"+getTimestamp()+".wav")
+                # check for folder and...
+                writer.wavwriter(self.load,len(self.load),self.callerId+"-"+getTimestamp()+".wav",self.userId)
                 flows.pop(self.addr)
                 inputs.remove(self.rtp_socket)
                 inputs.remove(self.rtcp_socket)
@@ -152,7 +154,7 @@ def server(sip_port):
                         #Start receiving
                         f = Flow()
                         flows[addr] = f # Use port of remote end too
-                        r = Receiver(addr,sip_inst.userId)
+                        r = Receiver(addr, sip_inst.userId, sip_inst.callerId)
                         r.start()
                         sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
                         sdp_inst.setPort(8078)
