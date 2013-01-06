@@ -19,15 +19,21 @@ import scp
 import tempfile
 import random
 import SIP
-#import SDP_sip
 import sdp
 import ctypes
 import writer
 import helpers
 import io
+import datetime
 
 server_ip = ""
 RTP_PACKET_MAX_SIZE = 1500
+
+
+def getTimestamp():
+    time = datetime.datetime.today()
+    timestamp = str(time.year)+"."+str(time.month)+"."+str(time.day)+"_"+str(time.hour)+":"+str(time.minute)+":"+str(time.second)
+    return timestamp
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -60,7 +66,7 @@ flows = dict()
 
 class Receiver(threading.Thread):
     """ Receives rtp and rtcp messages """
-    def __init__(self,addr):
+    def __init__(self,addr, userid):
         """ Init """
         threading.Thread.__init__(self)
         self.load = ''
@@ -69,6 +75,7 @@ class Receiver(threading.Thread):
         self.rtcp_socket = bind(8079)
         self.rbuf = io.BytesIO()
         self.offset = 0
+        self.userid = userid
 
     def run(self):
         """ Main loop """
@@ -79,7 +86,7 @@ class Receiver(threading.Thread):
         while True:
             if flows[self.addr].stop == True:
                 print "Printing file"
-                writer.wavwriter(self.load,len(self.load),'msg.wav')
+                writer.wavwriter(self.load,len(self.load),self.userid+"_"+getTimestamp()+".wav")
                 flows.pop(self.addr)
                 inputs.remove(self.rtp_socket)
                 inputs.remove(self.rtcp_socket)
@@ -145,7 +152,7 @@ def server(sip_port):
                         #Start receiving
                         f = Flow()
                         flows[addr] = f # Use port of remote end too
-                        r = Receiver(addr)
+                        r = Receiver(addr,sip_inst.userId)
                         r.start()
                         sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
                         sdp_inst.setPort(8078)
