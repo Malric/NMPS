@@ -234,7 +234,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     playlistLen = 3
     if args.playlistLen is not None:
-        if args.playlistLen >0 and args.playlistLen <10:
+        if args.playlistLen >0 and args.playlistLen <sys.maxint:
             playlistLen = args.playlistLen
     else:
         playlistLen = 3

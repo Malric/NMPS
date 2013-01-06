@@ -63,9 +63,10 @@ def getPlaylist(size, ip, port):
     i = 0
     
     if size > songs.__len__():
-        print "Playlist Server: Requested playlist size is too big"
-        return ""
-    elif size*2 <= songs.__len__():
+        print "Playlist Server: Requested playlist size is too big, returning the maximum amount."
+        size = songs.__len__()
+
+    if size*2 <= songs.__len__():
         idxs = [] # playlist is randomly chosen from these songs (song indexes in 'songs' list)
         for song in songs:
             if song.in_last_pl is False:
