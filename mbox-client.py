@@ -4,6 +4,7 @@ import curses
 import re
 import sys
 import os
+import plp
 
 
 def connect(host,port):
@@ -44,19 +45,18 @@ class Playlist:
             lines = data.splitlines()
         except:#be more explicit
             print 'data.splitlines()' 
-        if lines[0] == "Playlist OK":
-            if lines[1] == "Ltunez-Server":
-                if  lines[2] == "#EXTM3U":
-                    for line in lines[3:len(lines) - 1]:
-                        if lines.index(line)%2 == 0:
-                            continue
-                        try:        
-                            lst = re.split('#EXTINF:|,|-',line,3)
-                        except:#be more explicit
-                            print 're.split()'
-                        self.playlist[index] = [int(lst[1]),lst[2],lst[3],lines[(lines.index(line))+1]]
-                        index += 1
+        if  lines[0] == "#EXTM3U":
+            for line in lines[0:len(lines) - 1]:
+                if lines.index(line)%2 == 0:
+                    continue
+                try:        
+                    lst = re.split('#EXTINF:|,|-',line,3)
+                except:#be more explicit
+                    print 're.split()'
+                self.playlist[index] = [int(lst[1]),lst[2],lst[3],lines[(lines.index(line))+1]]
+                index += 1
         self.draw()
+
 
     def next(self):
         """ Next song. """
@@ -151,9 +151,10 @@ def main(host,port,client_name):
     inputs = []
     inputs.append(sys.stdin)
     #Send request to playlist server
+    plpmessage = plp.PLPMessage()
     sock = connect(host,port)
     if(sock != None):
-        req = "GET PLAYLIST\r\nLtunez-Client\r\n"+client_name+"\r\n\r\n"
+        req = plpmessage.createMBoxClientRequest(client_name)
         sock.send(req)
         inputs.append(sock)
     quit = False;
@@ -174,11 +175,21 @@ def main(host,port,client_name):
                 elif ch == curses.KEY_RIGHT:
                     playlist.next()  
                 elif ch == curses.KEY_LEFT:
-                    playlist.previous()  
+                    playlist.previous()
+                elif ch == 114 or ch == 82:
+                    sock = connect(host,port)
+                    if(sock != None):
+                        req = plpmessage.createMBoxClientRequest(client_name)
+                        sock.send(req)
+                        inputs.append(sock)
             else:
                 data = data + ins.recv(1024)
                 if re.search('\\r\\n\\r\\n',data):
-                    playlist.parse(data)
+                    plpmessage.parse(data)
+                    if plpmessage.command == "Playlist OK":
+                        playlist.parse(plpmessage.playlist)
+                    else:
+                        print "Request failed\r\n"
                     data = ''
             curses.doupdate()
         if quit:

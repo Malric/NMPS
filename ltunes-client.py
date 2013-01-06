@@ -174,7 +174,6 @@ def main(host,port):
                 elif ch == curses.KEY_LEFT:
                     playlist.previous()
                 elif ch == 114 or ch == 82:
-                    #reqPlaylist=True
                     sock = connect(host,port)
                     if(sock != None):
                         req = plpmessage.createLTunezClientRequest()
