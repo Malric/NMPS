@@ -26,7 +26,7 @@ import helpers
 import io
 import datetime
 
-server_ip = ""
+server_ip = ''
 RTP_PACKET_MAX_SIZE = 1500
 
 
@@ -39,6 +39,7 @@ def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
     #HOST = '127.0.0.1'    # Local host
     HOST = server_ip
+    print server_ip
     s = None
     for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
         af, socktype, proto, canonname, sa = res
@@ -66,13 +67,13 @@ flows = dict()
 
 class Receiver(threading.Thread):
     """ Receives rtp and rtcp messages """
-    def __init__(self,addr, userid):
+    def __init__(self,addr, userid,rtp_socket,rtcp_socket):
         """ Init """
         threading.Thread.__init__(self)
         self.load = ''
         self.addr = addr
-        self.rtp_socket = bind(8078)
-        self.rtcp_socket = bind(8079)
+        self.rtp_socket = rtp_socket
+        self.rtcp_socket = rtcp_socket
         self.rbuf = io.BytesIO()
         self.offset = 0
         self.userid = userid
@@ -152,10 +153,24 @@ def server(sip_port):
                         #Start receiving
                         f = Flow()
                         flows[addr] = f # Use port of remote end too
-                        r = Receiver(addr,sip_inst.userId)
+                        # Create rtp and rtcp socket
+                        while True:
+                            while True:
+                                port = random.randint(10000,65000)
+                                rtp_socket = bind(port)
+                                if rtp_socket is None:
+                                    continue
+                                else:
+                                    break
+                            rtcp_socket = bind(port + 1)
+                            if rtcp_socket is None:
+                                rtp_socket.close()
+                            else:
+                                break
+                        r = Receiver(addr,sip_inst.userId,rtp_socket,rtcp_socket)
                         r.start()
                         sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
-                        sdp_inst.setPort(8078)
+                        sdp_inst.setPort(port)
                         sdp_inst.setRtpmap()
                         sdp_inst.setC()
                         sdp_inst.setT()
@@ -190,5 +205,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--sip", help="SIP server port", type=int)
     args = parser.parse_args()
-    server_ip = helpers.sockLocalIp()      
+    server_ip = helpers.tcpLocalIp()      
     server(args.sip)
