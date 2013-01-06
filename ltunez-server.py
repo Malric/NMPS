@@ -204,7 +204,7 @@ def server(port_rtsp, port_playlist, playlistLen):
             inputs.remove(playlistsocket)
             rtspsocket.close()
             playlistsocket.close()
-            #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
+            shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
             sys.exit(0)
         for option in inputready:
             if option is rtspsocket:

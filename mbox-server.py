@@ -311,7 +311,7 @@ def server(port_rtsp, port_playlist, port_sip):
             rtsp_socket.close()
             playlist_socket.close()
             sip_socket.close()
-            #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
+            shutil.rmtree(os.getcwd() + "/Records", ignore_errors=True) # remove "Wavs" dir
             sys.exit(0)
         for option in inputready:
             if option is rtsp_socket:
@@ -341,7 +341,6 @@ def server(port_rtsp, port_playlist, port_sip):
                     print 'Server: SIP ', msg
                     continue
                 print 'Server: SIP message from ', addr, ':'
-                #server_ip = socket.gethostbyname(socket.gethostname())
                 sip_inst = SIP.SIPMessage(buff)
                 if sip_inst.parse() is True:
                     print sip_inst.SIPMsg
@@ -378,7 +377,7 @@ def server(port_rtsp, port_playlist, port_sip):
                         print >>sys.stderr, "Sent %s bytes to %s" % (sent, addr)
                     elif sip_inst.SIPCommand == "OPTIONS":
                         sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
-                        sdp_inst.setPort(8078)
+                        #sdp_inst.setPort(8078)
                         sdp_inst.sip_port = port_sip
                         sdp_inst.setRtpmap()
                         sdp_inst.setC()

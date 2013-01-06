@@ -8,6 +8,8 @@ def wavwriter(data, size, filename, folder):
     fmtheader = pack('<4sIHHIIHHH','fmt ', 18, 7, 1, 8000, 8000, 1, 8 ,0)
     dataheader = pack('<4sI', 'data',size)
     wavefile = riffheader +fmtheader + dataheader + data
+    if os.path.isdir("Records") is False:
+    	os.mkdir("Records")
     if os.path.isdir("Records/"+folder) is False:
     	os.mkdir("Records/"+folder)
     f = open("Records/"+folder+"/"+filename,'w')

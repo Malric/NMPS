@@ -18,7 +18,7 @@ class SDPMessage:
         self.s = subject
         self.o = program+" "+str(session)+" "+NTP.timestamp()+" IN IP4 "\
 				 +server_ip
-        self.m = "audio 0 RTP/AVP 0" #u-law PCM! <-- Fix me for A-law # removed /2
+        self.m = ""#"audio 0 RTP/AVP 0" #u-law PCM! <-- Fix me for A-law # removed /2
         self.mode = ""
         self.rtpmap = ""
         self.c = ""
@@ -48,9 +48,10 @@ class SDPMessage:
             self.sdpMsg +="c="+self.c+terminator
         if self.t != "":
             self.sdpMsg +="t="+self.t+terminator
-        self.sdpMsg +="m="+self.m+terminator
-        if self.rtpmap != "":
-            self.sdpMsg +="a="+self.rtpmap+terminator
-        if self.mode != "":
-            self.sdpMsg +="a="+self.mode
+        if self.m != "":    
+            self.sdpMsg +="m="+self.m+terminator
+            if self.rtpmap != "":
+                self.sdpMsg +="a="+self.rtpmap+terminator
+            if self.mode != "":
+                self.sdpMsg +="a="+self.mode
         return self.sdpMsg
