@@ -24,9 +24,10 @@ import sdp
 import ctypes
 import writer
 import helpers
+import io
 
 server_ip = ""
-RTP_PACKET_MAX_SIZE = 1400
+RTP_PACKET_MAX_SIZE = 1500
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
@@ -66,6 +67,8 @@ class Receiver(threading.Thread):
         self.addr = addr
         self.rtp_socket = bind(8078)
         self.rtcp_socket = bind(8079)
+        self.rbuf = io.BytesIO()
+        self.offset = 0
 
     def run(self):
         """ Main loop """
@@ -82,6 +85,7 @@ class Receiver(threading.Thread):
                 inputs.remove(self.rtcp_socket)
                 self.rtp_socket.close()
                 self.rtcp_socket.close()
+                self.rbuf.close()
                 break
             try:
                 inputready,outputready,exceptready = select.select(inputs,[],[],0)
@@ -93,14 +97,16 @@ class Receiver(threading.Thread):
                     pass                 
                     #print data # For now,lets see how it goes
                 if option is self.rtp_socket:
-                    data, addr = self.rtp_socket.recvfrom_into(rtpmessage.header,12)
+                    data, addr = self.rtp_socket.recvfrom(RTP_PACKET_MAX_SIZE)
+                    self.rbuf.seek(0, io.SEEK_END)
+                    written = self.rbuf.write(data)
+                    self.rbuf.seek(-written, io.SEEK_CUR)
+                    self.rbuf.readinto(rtpmessage.header)
                     rtpmessage.updateFields()
-                    offset = rtpmessage.getOffset()
-                    #print "Offset: "+str(offset)
-                    if offset != 0:
-                        data2,addr = self.rtp_socket.recvfrom(offset)
-                        #print data2
-                    payload, addr = self.rtp_socket.recvfrom(RTP_PACKET_MAX_SIZE)
+                    self.offset += rtpmessage.getOffset()
+                    self.rbuf.seek(self.offset, io.SEEK_CUR)
+                    payloadLen = written-self.offset-12
+                    payload = self.rbuf.read(payloadLen)
                     print "Single packet: " +str(len(payload))
                     self.load += payload
                     print "Total load: " +str(len(self.load))            
