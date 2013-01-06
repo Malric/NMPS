@@ -313,7 +313,6 @@ def server(port_rtsp, port_playlist, port_sip):
             sip_socket.close()
             #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
             sys.exit(0)
-            break
         for option in inputready:
             if option is rtsp_socket:
                 try:            
@@ -372,7 +371,7 @@ def server(port_rtsp, port_playlist, port_sip):
                         sdp_inst.setRtpmap()
                         sdp_inst.setC()
                         sdp_inst.setT()
-                        reply = sip_inst.createInviteReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, port_sip)
+                        reply = sip_inst.createInviteReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, port_sip, sip_inst.userId)
                         print "Sending invite reply:"
                         print reply
                         sent = sip_socket.sendto(reply, addr)
@@ -384,7 +383,7 @@ def server(port_rtsp, port_playlist, port_sip):
                         sdp_inst.setRtpmap()
                         sdp_inst.setC()
                         sdp_inst.setT()
-                        reply = sip_inst.createOptionsReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, port_sip)
+                        reply = sip_inst.createOptionsReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, port_sip, sip_inst.userId)
                         print "Sending options reply:"
                         print reply
                         sent = sip_socket.sendto(reply, addr)
@@ -392,7 +391,7 @@ def server(port_rtsp, port_playlist, port_sip):
                     elif sip_inst.SIPCommand == "BYE":
                         #Leave
                         flows[addr].stop = True
-                        reply = sip_inst.createByeReplyMessage(server_ip, port_sip)
+                        reply = sip_inst.createByeReplyMessage(server_ip, port_sip, sip_inst.userId)
                         print "Sending bye reply:"
                         print reply
                         sent = sip_socket.sendto(reply, addr)

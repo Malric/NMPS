@@ -78,7 +78,6 @@ def main():
     # List of client
     clients = dict() #dict containing all clients for this song
     rtpheader = RTP.RTPMessage(24567)
-    print sys.argv[1]
     wavef = wav.Wave(sys.argv[1])
     song = wavef.getdata()
     songsize = wavef.getnframes()
@@ -120,8 +119,8 @@ def main():
                 rtp_socket.sendto(packet,(v.ip,int(v.rtp)))
                 v.index = v.index + 1400
                 v.sequence = v.sequence + 1
-                v.timestamp = v.timestamp + 1400  
-        time.sleep(0.175)      
+                v.timestamp = v.timestamp + 1400
+        time.sleep(0.175)
         if ONCE and len(clients) == 0:
             break
     unix_socket.close()
