@@ -7,7 +7,6 @@ import argparse
 import socket
 import threading
 import select
-import re
 import os
 import shutil
 import RTSP
@@ -15,7 +14,6 @@ import sdp
 import playlist
 import time
 import scp
-import tempfile
 import random
 import helpers
 import plp
@@ -66,7 +64,7 @@ def startANDconnect(file_name):
     temp_path = os.tmpnam()
     try:
         unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
-    except socekt.error as msg:
+    except socket.error as msg:
         print 'RTSP thread unix socket creation',msg
         return None
     try: 
@@ -182,13 +180,13 @@ class Accept_RTSP(threading.Thread):
             if p.rtspCommand == "TEARDOWN":
                 self.conn.close()
                 break 
-      
 
 def server(port_rtsp, port_playlist, playlistLen):
     """ This function waits for RTSP/Playlist request and starts new thread. """
     global server_ip
     playlistLen = playlistLen
     server_ip = helpers.tcpLocalIp()
+    print "Server: My IP: " + server_ip
     playlist.initSongs()    
     inputs = []
     rtspsocket = listen(port_rtsp)
@@ -245,4 +243,3 @@ if __name__ == "__main__":
         playlistLen = 3
     server_ip = helpers.sockLocalIp()   
     server(args.rtsp,args.playlist, playlistLen)
-
