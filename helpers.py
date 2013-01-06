@@ -1,4 +1,5 @@
 import socket
+import datetime
 
 ##
 # Binding helper
@@ -55,3 +56,11 @@ def udpLocalIp():
 def sockLocalIp():
     ret = socket.gethostbyname(socket.getfqdn())
     return ret
+
+##
+# Convinient timestamp function
+##
+def getTimestamp():
+    time = datetime.datetime.today()
+    timestamp = str(time.year)+"_"+str(time.month)+"_"+str(time.day)+"_"+str(time.hour)+"_"+str(time.minute)+"_"+str(time.second)
+    return timestamp

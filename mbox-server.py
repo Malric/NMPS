@@ -4,6 +4,7 @@
 #
 ###
 
+import RTP
 import sys
 import argparse
 import socket
@@ -20,11 +21,14 @@ import scp
 import tempfile
 import random
 import SIP
-import SDP_sip
+import sdp
 import helpers
 import plp
+import io
+import writer
 
 server_ip = ""
+RTP_PACKET_MAX_SIZE = 1500
 
 def listen(PORT):
     """ Create listening TCP socket """
@@ -58,9 +62,24 @@ def listen(PORT):
 
 def bind(PORT):
     """ Create UDP socket and bind given port with it. """ 
-    HOST = ""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((HOST, PORT))
+    HOST = server_ip
+    s = None
+    for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_DGRAM):
+        af, socktype, proto, canonname, sa = res
+        try:
+            s = socket.socket(af, socktype, proto)
+        except socket.error as msg:
+            print 'Binding problem: '+str(msg)
+            s = None
+            continue
+        try:
+            s.bind(sa)
+        except socket.error as msg:
+            print 'Binding problem: '+str(msg)
+            s.close()
+            s = None
+            continue
+        break
     return s
 
 def startANDconnectStreamer(file_path):
@@ -71,7 +90,7 @@ def startANDconnectStreamer(file_path):
         if pid < 0:
             return None
         elif pid == 0:
-            os.execlp('python','python','streamer.py',file_path,socket_path)
+            os.execlp('python','python','streamer.py',"Records/"+file_path,socket_path)
     print 'Server: Forked'
     time.sleep(2)
     temp_path = os.tmpnam()
@@ -92,40 +111,72 @@ def startANDconnectStreamer(file_path):
         return None
     return unixsocket
 
-'''
-def startANDconnectReciever(path):
-    if not os.path.exists('Sockets/'+path):
-        pid = os.fork()
-        if pid < 0:
-            return None
-        elif pid == 0:
-           # os.execlp('python','python','reciever.py',path)
-    print 'Forked'
-    time.sleep(5)
-    pathtosocket = 'Sockets/'+path
-    print 'server',path
-    temp_path = os.tmpnam()
-    try:
-        unixsocket = socket.socket(socket.AF_UNIX,socket.SOCK_DGRAM)
-    except socket.error as msg:
-        print 'SIP thread unix socket creation',msg
-        return None
-    try: 
-        unixsocket.bind(temp_path)
-    except socket.error as msg:
-        print 'SIP thread unix socket bind',msg
-        return None
-    try:
-        unixsocket.connect(pathtosocket)
-    except socket.error as msg:
-        print 'SIP thread unix socket connect',msg
-        return None
-    return unixsocket
-'''
+class Flow():
+    start = True
+    stop = False
+
+flows = dict()
+
+class Receiver(threading.Thread):
+    """ Receives rtp and rtcp messages """
+    def __init__(self, addr, rtp_socket, rtcp_socket, userId, callerId):
+        """ Init """
+        threading.Thread.__init__(self)
+        self.load = ''
+        self.addr = addr
+        self.rtp_socket = rtp_socket
+        self.rtcp_socket = rtcp_socket
+        self.rbuf = io.BytesIO()
+        self.offset = 0
+        self.userId = userId
+        self.callerId = callerId
+
+    def run(self):
+        print "Starting Receiver"
+        """ Main loop """
+        inputs = []
+        inputs.append(self.rtp_socket)
+        inputs.append(self.rtcp_socket)
+        rtpmessage = RTP.RTPMessage(24567)
+        while True:
+            if flows[self.addr].stop == True:
+                print "Printing file"
+                writer.wavwriter(self.load,len(self.load),self.callerId+"-"+helpers.getTimestamp()+".wav",self.userId)
+                flows.pop(self.addr)
+                inputs.remove(self.rtp_socket)
+                inputs.remove(self.rtcp_socket)
+                self.rtp_socket.close()
+                self.rtcp_socket.close()
+                self.rbuf.close()
+                break
+            try:
+                inputready,outputready,exceptready = select.select(inputs,[],[],0)
+            except select.error as msg:
+                print 'Receiver: '+str(msg)
+            for option in inputready:        
+                if option is self.rtcp_socket:
+                    data = self.rtcp_socket.recv(1024)
+                    pass                 
+                    #print data # For now,lets see how it goes
+                if option is self.rtp_socket:
+                    data, addr = self.rtp_socket.recvfrom(RTP_PACKET_MAX_SIZE)
+                    self.rbuf.seek(0, io.SEEK_END)
+                    written = self.rbuf.write(data)
+                    self.rbuf.seek(-written, io.SEEK_CUR)
+                    self.rbuf.readinto(rtpmessage.header)
+                    rtpmessage.updateFields()
+                    self.offset += rtpmessage.getOffset()
+                    self.rbuf.seek(self.offset, io.SEEK_CUR)
+                    payloadLen = written-self.offset-12
+                    payload = self.rbuf.read(payloadLen)
+                    #print "Single packet: " +str(len(payload))
+                    self.load += payload
+                    #print "Total load: " +str(len(self.load))            
+
 
 class Accept_PL(threading.Thread):
     """ Thread class. Each thread handles playlist request/reply for specific connection. """
-    def __init__(self,conn,addr, port_rtsp):
+    def __init__(self, conn, addr, port_rtsp):
         """ Initialize with socket and address. """
         threading.Thread.__init__(self)
         self.conn = conn
@@ -143,66 +194,16 @@ class Accept_PL(threading.Thread):
             reply = ""
             if plpmessage.command == "GET PLAYLIST" and plpmessage.program == "MBox-Client":
                 print "Playlist Server: Got playlist request for client: " + plpmessage.userid
-                pl = playlist.getRecordList(server_ip, self.port_rtsp, plpmessage.userid)
+                pl = playlist.getRecordlist(server_ip, self.port_rtsp, plpmessage.userid)
                 if pl:
                     reply = plpmessage.createServerOkResponse("MBox-Server", pl)
                 else:
                     reply = plpmessage.createServerFailureResponse("MBox-Server")
             else:
                 reply = plpmessage.createServerFailureResponse("MBox-Server")
+            print reply
             self.conn.sendall(reply)
         self.conn.close()
-
-'''
-class Accept_SIP(threading.Thread):
-    """ Thread class. Thread handles SIP message request/reply. """
-    def __init__(self, sip_socket, buff, addr):
-        """ Initialize with socket and address. """
-        threading.Thread.__init__(self)
-        self.s = sip_socket
-        self.buff = buff
-        self.addr = addr
-
-    def run(self):
-        """ Override base class run() function. """
-        #unixsocket = None
-        server_ip = socket.gethostbyname(socket.gethostname())
-        while True:
-            sip_inst = SIP.SIPMessage(self.buff)
-            if sip_inst.parse() is True:
-                print sip_inst.SIPMsg
-                client_ip = sip_inst.client_ip
-                if sip_inst.SIPCommand == "INVITE":
-                    #unixsocket = startANDconnectStreamer(p.pathname)            
-                    #if unixsocket is None:
-                        #break
-                    #unixsocket.send(
-                    #unitsocket.recv port info...
-                    sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
-                    reply = sip_inst.createInviteReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
-                    print "Sending invite reply:"
-                    print reply
-                    sent = self.s.sendto(reply, self.addr)
-                    print >>sys.stderr, "Sent %s bytes to %s" % (sent, self.addr)
-                elif sip_inst.SIPCommand == "OPTIONS":
-                    sdp_inst = SDP_sip.SDPMessage("123456", "Talk", client_ip)
-                    reply = sip_inst.createOptionsReplyMessage(sdp_inst.SDPMsg, client_ip, server_ip)
-                    print "Sending options reply:"
-                    print reply
-                    sent = self.s.sendto(reply, self.addr)
-                    print >>sys.stderr, "Sent %s bytes to %s" % (sent, self.addr)
-                elif sip_inst.SIPCommand == "BYE":
-                    #unitsocket.send(TEARDOWN)
-                    reply = sip_inst.createByeReplyMessage(server_ip)
-                    print "Sending bye reply:"
-                    print reply
-                    sent = self.s.sendto(reply, self.addr)
-                    print >>sys.stderr, "Sent %s bytes to %s" % (sent, self.addr)
-                    break
-            self.buff = ''
-            self.buff, self.addr = self.s.recvfrom(1024)
-            print 'Server: SIP message from ', self.addr, ':'
-'''
 
 class Accept_RTSP(threading.Thread):
     """ Thread class. Each thread handles RTSP message request/reply for specific connection. """
@@ -286,18 +287,19 @@ def server(port_rtsp, port_playlist, port_sip):
         rtsp_socket.close()
         sys.exit(1)
     print "Server: Playlist socket listening"
-    '''
+    
     sip_socket = bind(port_sip) # UDP socket
     if sip_socket is None:
         rtsp_socket.close()
         playlist_socket.close()
         sys.exit(1)
-    print "SIP socket ready"
-    '''
+    print "Server: SIP socket ready"
+    
     inputs.append(rtsp_socket)
     inputs.append(playlist_socket)
-    #inputs.append(sip_socket)
-    #SIP_once = False # only one SIP thread for now   
+    inputs.append(sip_socket)
+
+    session = random.randint(1,10000)
     while True:
         try:
             inputready,outputready,exceptready = select.select(inputs, [], [])
@@ -305,11 +307,12 @@ def server(port_rtsp, port_playlist, port_sip):
             print 'Interrupted by user,exiting'
             inputs.remove(rtsp_socket)
             inputs.remove(playlist_socket)
-            #inputs.remove(sip_socket)
+            inputs.remove(sip_socket)
             rtsp_socket.close()
             playlist_socket.close()
-            #sip_socket.close()
+            sip_socket.close()
             #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
+            sys.exit(0)
             break
         for option in inputready:
             if option is rtsp_socket:
@@ -322,7 +325,6 @@ def server(port_rtsp, port_playlist, port_sip):
                 
                 r = Accept_RTSP(conn, addr)
                 r.start()
-                
             elif option is playlist_socket:
                 try:
                     conn,addr = playlist_socket.accept()
@@ -331,20 +333,71 @@ def server(port_rtsp, port_playlist, port_sip):
                     continue
                 print 'Server: Playlist request from ',addr
                 p = Accept_PL(conn, addr, port_rtsp)
-                p.start()
-            '''    
-            elif option is sip_socket and not SIP_once:
-                SIP_once = True
+                p.start()   
+            elif option is sip_socket:
                 buff = ''
                 try:
                     buff, addr = sip_socket.recvfrom(1024)
                 except socket.error as msg:
                     print 'Server: SIP ', msg
                     continue
-                print 'Server: Starting SIP thread, SIP message from ', addr, ':'
-                s = Accept_SIP(sip_socket, buff, addr)
-                s.start()
-            '''
+                print 'Server: SIP message from ', addr, ':'
+                #server_ip = socket.gethostbyname(socket.gethostname())
+                sip_inst = SIP.SIPMessage(buff)
+                if sip_inst.parse() is True:
+                    print sip_inst.SIPMsg
+                    client_ip = sip_inst.client_ip
+                    if sip_inst.SIPCommand == "INVITE":
+                        #Start receiving
+                        f = Flow()
+                        flows[addr] = f # Use port of remote end too
+                        # Create rtp and rtcp socket
+                        while True:
+                            while True:
+                                port = random.randint(10000,65000)
+                                rtp_socket = bind(port)
+                                if rtp_socket is None:
+                                    continue
+                                else:
+                                    break
+                            rtcp_socket = bind(port + 1)
+                            if rtcp_socket is None:
+                                rtp_socket.close()
+                            else:
+                                break
+                        r = Receiver(addr,rtp_socket,rtcp_socket, sip_inst.userId, sip_inst.callerId)
+                        r.start()
+                        sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
+                        sdp_inst.setPort(port)
+                        sdp_inst.setRtpmap()
+                        sdp_inst.setC()
+                        sdp_inst.setT()
+                        reply = sip_inst.createInviteReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, port_sip)
+                        print "Sending invite reply:"
+                        print reply
+                        sent = sip_socket.sendto(reply, addr)
+                        print >>sys.stderr, "Sent %s bytes to %s" % (sent, addr)
+                    elif sip_inst.SIPCommand == "OPTIONS":
+                        sdp_inst = sdp.SDPMessage("MBox", "Talk", session)
+                        sdp_inst.setPort(8078)
+                        sdp_inst.sip_port = port_sip
+                        sdp_inst.setRtpmap()
+                        sdp_inst.setC()
+                        sdp_inst.setT()
+                        reply = sip_inst.createOptionsReplyMessage(sdp_inst.getMessage(), client_ip, server_ip, port_sip)
+                        print "Sending options reply:"
+                        print reply
+                        sent = sip_socket.sendto(reply, addr)
+                        print >>sys.stderr, "Sent %s bytes to %s" % (sent, addr)
+                    elif sip_inst.SIPCommand == "BYE":
+                        #Leave
+                        flows[addr].stop = True
+                        reply = sip_inst.createByeReplyMessage(server_ip, port_sip)
+                        print "Sending bye reply:"
+                        print reply
+                        sent = sip_socket.sendto(reply, addr)
+                        print >>sys.stderr, "Sent %s bytes to %s" % (sent, addr)
+                        break
                 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

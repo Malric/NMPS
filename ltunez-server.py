@@ -102,7 +102,7 @@ class Accept_PL(threading.Thread):
             #print "Playlist Server: Creating playlist"
             pl = playlist.getPlaylist(self.playlistLen, server_ip, self.port_rtsp)
             reply = plpmessage.createServerOkResponse("LTunez-Server", pl)
-            #print "Playlist Server: Sending playlist reply:\r\n" + reply 
+            print "Playlist Server: Sending playlist reply:\r\n" + reply 
             self.conn.sendall(reply)
         else:
             #print "Playlist Server: Invalid request from client"
@@ -205,7 +205,7 @@ def server(port_rtsp, port_playlist, playlistLen):
             rtspsocket.close()
             playlistsocket.close()
             #shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
-            break
+            sys.exit(0)
         for option in inputready:
             if option is rtspsocket:
                 try:            

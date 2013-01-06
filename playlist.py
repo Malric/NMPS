@@ -95,9 +95,9 @@ class Record: # used in MBox
         self.title = title
         self.path = path
 
-def getRecordList(ip, port, client_name):
+def getRecordlist(ip, port, client_name):
     """ This function returns a recordlist string for a client in M3U format. Used in MBox """
-    if os.path.isdir(os.getcwd() + "Records/" + client_name):
+    if os.path.isdir("Records/" + client_name):
         print "Playlist Server: Client folder found"
     else:
         print "Playlist Server: Client folder not found"
