@@ -10,7 +10,6 @@ import argparse
 import socket
 import threading
 import select
-import re
 import os
 import shutil
 import RTSP
@@ -18,13 +17,12 @@ import sdp
 import playlist
 import time
 import scp
-import tempfile
 import random
 import SIP
-import sdp
 import helpers
 import plp
 import io
+import signal
 import writer
 
 server_ip = ""
@@ -312,7 +310,7 @@ def server(port_rtsp, port_playlist, port_sip):
         try:
             inputready,outputready,exceptready = select.select(inputs, [], [])
         except KeyboardInterrupt:
-            print 'Interrupted by user,exiting'
+            print '\r\nInterrupted by user'
             inputs.remove(rtsp_socket)
             inputs.remove(playlist_socket)
             inputs.remove(sip_socket)
@@ -321,7 +319,7 @@ def server(port_rtsp, port_playlist, port_sip):
             sip_socket.close()
             shutil.rmtree(os.getcwd() + "/Sockets", ignore_errors=True) # remove "Sockets" dir
             shutil.rmtree(os.getcwd() + "/Records", ignore_errors=True) # remove "Records" dir
-            sys.exit(0)
+            os.kill(os.getpid(), signal.SIGTERM) # terminate itself
         for option in inputready:
             if option is rtsp_socket:
                 try:            

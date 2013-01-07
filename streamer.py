@@ -14,6 +14,7 @@ import wave
 import ctypes
 import wav
 import helpers
+import signal
 
 class Client():
     rtp = 0  # rtp port
@@ -46,9 +47,17 @@ def bind(PORT):
             continue
         break
     return s
+
+def SIGTERMhandler(signum, frame):
+    exit(0)
+
+def SIGINThandler(signum, frame):
+    exit(0)
  
 # One streamer per song for all clients
 def main():
+    signal.signal(signal.SIGINT, SIGINThandler)
+    signal.signal(signal.SIGTERM, SIGTERMhandler)
     """ Control section for streamer. """
     # Create unix socket for IPC
     socket_path = sys.argv[2]

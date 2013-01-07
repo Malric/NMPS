@@ -17,8 +17,11 @@ import scp
 import random
 import helpers
 import plp
+import signal
+import statistics
 
 server_ip = ""
+stats = statistics.Statistics()
 
 def listen(PORT):
     """ Create listening socket """
@@ -91,13 +94,14 @@ class Accept_PL(threading.Thread):
 
     def run(self):
         """ Override base class run() function. """
+        global stats
         data = self.conn.recv(1024)
         if data is None:
             print "Playlist Server: No data"
         plpmessage = plp.PLPMessage()
         plpmessage.parse(data)
         if plpmessage.command == "GET PLAYLIST" and plpmessage.program =="LTunez-Client":
-            #print "Playlist Server: Creating playlist"
+            stats.playlists += 1
             pl = playlist.getPlaylist(self.playlistLen, server_ip, self.port_rtsp)
             reply = plpmessage.createServerOkResponse("LTunez-Server", pl)
             print "Playlist Server: Sending playlist reply:\r\n" + reply 
@@ -118,6 +122,7 @@ class Accept_RTSP(threading.Thread):
 
     def run(self):  
         """ Override base class run() function. """
+        global stats
         data = ''
         unixsocket = None
         p = RTSP.RTSPMessage(None)
@@ -152,7 +157,8 @@ class Accept_RTSP(threading.Thread):
                     unixsocket = startANDconnect(p.pathname)            
                     if unixsocket is None:
                         self.conn.close()
-                        break    
+                        break
+                    stats.songs += 1    
                 if p.rtspCommand != "DESCRIBE" and p.rtspCommand != "OPTIONS":
                     try:
                         """ Controlling the streamers is basically done as converting RTSP requests to SCP requests."""
@@ -183,6 +189,7 @@ class Accept_RTSP(threading.Thread):
 
 def server(port_rtsp, port_playlist, playlistLen):
     """ This function waits for RTSP/Playlist request and starts new thread. """
+    global stats
     global server_ip
     playlistLen = playlistLen
     server_ip = helpers.tcpLocalIp()
@@ -204,14 +211,15 @@ def server(port_rtsp, port_playlist, playlistLen):
         try:
             inputready,outputready,exceptready = select.select(inputs,[],[])
         except KeyboardInterrupt:
-            print 'Interrupted by user,exiting'
+            print '\r\nInterrupted by user'
             inputs.remove(rtspsocket)
             inputs.remove(playlistsocket)
             rtspsocket.close()
             playlistsocket.close()
-            shutil.rmtree(os.getcwd() + "/Sockets", ignore_errors=True) # remove "Sockets" dir
-            shutil.rmtree(os.getcwd() + "/Wavs", ignore_errors=True) # remove "Wavs" dir
-            sys.exit(0)
+            shutil.rmtree(os.getcwd() + '/Sockets', ignore_errors=True) # remove "Sockets" dir
+            shutil.rmtree(os.getcwd() + '/Wavs', ignore_errors=True) # remove "Wavs" dir
+            stats.printStats()
+            os.kill(os.getpid(), signal.SIGTERM) # terminate itself
         for option in inputready:
             if option is rtspsocket:
                 try:            
