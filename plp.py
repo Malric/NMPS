@@ -3,7 +3,6 @@
 ####
 
 import re
-#import logging
 
 #SCP Commands (Supported)
 commands = ["GET PLAYLIST", "Playlist OK", "Playlist Failure"]

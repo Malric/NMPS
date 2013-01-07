@@ -1,6 +1,8 @@
-####
-# Playlist/RTSP server
-####
+###
+#
+# LTunez Server
+#
+###
 
 import sys
 import argparse
@@ -54,6 +56,7 @@ def listen(PORT):
     return s
 
 def startANDconnect(file_name):
+    """ This function starts streamer process for the given file (song) if not exists """
     file_path = 'Wavs/' + file_name
     socket_path = 'Sockets/' + file_name
     if not os.path.exists(socket_path):

@@ -81,6 +81,7 @@ def bind(PORT):
     return s
 
 def startANDconnectStreamer(file_path):
+    """ This function starts streamer process for the given file (record) if not exists """
     socket_name = file_path.replace('/', '-')
     socket_path = 'Sockets/' + socket_name
     if not os.path.exists(socket_path):

@@ -10,8 +10,6 @@ import time
 import RTP
 import os
 import scp
-import wave
-import ctypes
 import wav
 import helpers
 import signal
@@ -54,7 +52,7 @@ def SIGTERMhandler(signum, frame):
 def SIGINThandler(signum, frame):
     exit(0)
  
-# One streamer per song for all clients
+# One streamer per song/record for all clients
 def main():
     signal.signal(signal.SIGINT, SIGINThandler)
     signal.signal(signal.SIGTERM, SIGTERMhandler)
@@ -118,7 +116,6 @@ def main():
             if option is rtcp_socket:
                 data = rtcp_socket.recv(1024)
                 pass                 
-                #print data # For now,lets see how it goes
         vs = clients.values()
         for v in vs:
             if v.STREAM and v.index < songsize:

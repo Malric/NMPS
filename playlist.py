@@ -1,13 +1,13 @@
 ###
 #
 # LTunez: Playlist generation including MP3 to wav (pcm mu-law) conversion
+# Ltunez: MP3s must be named without whitespaces
 # Ltunez: Playlist is randomly generated from the songs that were not in the previous playlist (if possible)
 # MBox: Playlist is generated from specific client's recordings
 #
 ###
 
 import os
-import errno
 import random
 from ffmpegwrapper import FFmpeg, Input, Output, AudioCodec, options
 import eyeD3
